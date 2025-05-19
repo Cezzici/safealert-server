@@ -1,103 +1,39 @@
 <?php
-session_start();
-if (!isset($_SESSION['user_id'])) {
-  header("Location: login.php");
-  exit();
-}
+require_once 'header.php';
 require_once 'db.php';
-$username = $_SESSION['username'];
-$role = $_SESSION['role'];
+
+$result = $conn->query("SELECT * FROM interventions ORDER BY timestamp DESC");
 ?>
-<!DOCTYPE html>
-<html lang="ro">
-<head>
-  <meta charset="UTF-8">
-  <title>Lista Intervenții – SafeAlert</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      background-color: #f5f3f7;
-    }
 
-    header {
-      background-color: #50276E;
-      color: white;
-      padding: 20px;
-    }
+<div class="card">
+  <h2>📋 Toate intervențiile înregistrate</h2>
 
-    main {
-      padding: 30px;
-    }
+  <div style="margin-bottom: 20px;">
+    <a href="dashboard.php" style="display: inline-block; background-color: #5e4283; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 500;">
+      ⬅️ Înapoi la Dashboard
+    </a>
+  </div>
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background-color: white;
-      box-shadow: 0 0 10px rgba(80, 39, 110, 0.1);
-      border-radius: 10px;
-      overflow: hidden;
-    }
-
-    th, td {
-      padding: 12px;
-      border-bottom: 1px solid #ddd;
-      text-align: left;
-    }
-
-    th {
-      background-color: #7B3FA4;
-      color: white;
-    }
-
-    tr:nth-child(even) {
-      background-color: #f2f2f2;
-    }
-  </style>
-</head>
-<body>
-
-<header>
-  <strong>Lista Intervenții – SafeAlert</strong><br>
-  Autentificat ca: <em><?= htmlspecialchars($username) ?></em> (<?= htmlspecialchars($role) ?>)
-</header>
-
-<main>
-<?php
-$query = "SELECT * FROM interventions ORDER BY timestamp DESC";
-$result = $conn->query($query);
-
-if (!$result) {
-  echo "<p style='color:red;'>Eroare MySQL: " . $conn->error . "</p>";
-  exit();
-}
-
-if ($result->num_rows > 0): ?>
-  <table>
-    <tr>
-      <th>ID</th>
-      <th>Formular ID</th>
-      <th>Tip intervenție</th>
-      <th>Responsabil</th>
-      <th>Status</th>
-      <th>Data</th>
-    </tr>
-
-    <?php while ($row = $result->fetch_assoc()): ?>
-      <tr>
-        <td><?= $row['id'] ?></td>
-        <td><?= $row['form_id'] ?></td>
-        <td><?= htmlspecialchars($row['intervention_type']) ?></td>
-        <td><?= htmlspecialchars($row['responsible_person']) ?></td>
-        <td><?= htmlspecialchars($row['status']) ?></td>
-        <td><?= $row['timestamp'] ?></td>
-      </tr>
+  <?php if ($result && $result->num_rows > 0): ?>
+    <?php while ($interv = $result->fetch_assoc()): ?>
+      <div style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #5e4283; background-color: #fdfdff; border-radius: 8px;">
+        <p><strong>ID intervenție:</strong> <?= htmlspecialchars($interv['id']) ?></p>
+        <p><strong>Formular asociat:</strong>
+          <a href="form_view.php?id=<?= $interv['form_id'] ?>">#<?= $interv['form_id'] ?></a>
+        </p>
+        <p><strong>Tip intervenție:</strong> <?= htmlspecialchars($interv['intervention_type']) ?></p>
+        <p><strong>Responsabil:</strong> <?= htmlspecialchars($interv['responsible_person'] ?? '-') ?></p>
+        <p><strong>Status:</strong> <?= htmlspecialchars($interv['status'] ?? '-') ?></p>
+        <p><strong>Dată intervenție:</strong> <?= htmlspecialchars($interv['timestamp']) ?></p>
+        <p><strong>Detalii:</strong></p>
+        <div style="background-color: #f8f6fb; padding: 10px; border-left: 4px solid #5e4283; border-radius: 6px;">
+          <?= nl2br(htmlspecialchars($interv['details'] ?? 'Fara detalii')) ?>
+        </div>
+      </div>
     <?php endwhile; ?>
-  </table>
-<?php else: ?>
-  <p>Nu există intervenții înregistrate.</p>
-<?php endif; ?>
-</main>
+  <?php else: ?>
+    <p>Nu există intervenții înregistrate.</p>
+  <?php endif; ?>
+</div>
 
-</body>
-</html>
+<?php include 'footer.php'; ?>

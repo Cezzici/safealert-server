@@ -2,77 +2,69 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+
 header('Content-Type: application/json');
 require_once 'db.php';
 
-// Loguri pentru debugging complet
-file_put_contents("debug_alert.log", json_encode($_POST, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
-file_put_contents("debug_alert_raw.log", file_get_contents("php://input") . "\n", FILE_APPEND);
-
-// Verifică dacă cererea este POST
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (empty($_POST)) {
-        echo json_encode(["success" => false, "message" => "POST gol – verifică formatul cererii."]);
-        exit;
-    }
-
-    $user_id = $_POST['user_id'] ?? '';
-    $severity = $_POST['severity'] ?? '';
-    $timestamp = date('Y-m-d H:i:s');
-    $status = 'new';
-
-    // DEFINIREA REGIUNILOR + COORDONATE (simulare completă)
-    $regiuni = [
-        "București" => ["Poliția Sector 1", "Poliția Sector 2", "Poliția Sector 3"],
-        "Cluj" => ["Poliția Cluj-Napoca", "Jandarmeria Cluj"],
-        "Iași" => ["Poliția Iași", "Jandarmeria Iași"],
-        "Timișoara" => ["Poliția Timișoara", "Jandarmeria Timiș"],
-        "Brașov" => ["Poliția Brașov", "Jandarmeria Brașov"]
-    ];
-    $coordonate_gps = [
-        "București" => [44.4268, 26.1025],
-        "Cluj" => [46.7712, 23.6236],
-        "Iași" => [47.1585, 27.6014],
-        "Timișoara" => [45.7489, 21.2087],
-        "Brașov" => [45.6579, 25.6012]
-    ];
-
-    $localitati = array_keys($regiuni);
-    $localitate = $localitati[array_rand($localitati)];
-    $autoritate = $regiuni[$localitate][array_rand($regiuni[$localitate])];
-    $latitude = $coordonate_gps[$localitate][0];
-    $longitude = $coordonate_gps[$localitate][1];
-
-    $severity = (int)$severity;
-
-    if ($user_id && is_numeric($severity)) {
-        $stmt = $conn->prepare("INSERT INTO alerts (user_id, latitude, longitude, severity, timestamp, status, location, authority) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("sddissss", $user_id, $latitude, $longitude, $severity, $timestamp, $status, $localitate, $autoritate);
-
-        if ($stmt->execute()) {
-            $alert_id = $stmt->insert_id;
-
-            // Cod unic pentru formular
-            $nr = rand(100, 999);
-            $code = "SAF-" . date('Ymd') . "-" . $nr;
-
-            $stmt_form = $conn->prepare("
-              INSERT INTO forms (user_id, alert_id, timestamp, location, severity, status, autoritate, code)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ");
-            $stmt_form->bind_param("iississs", $user_id, $alert_id, $timestamp, $localitate, $severity, $status, $autoritate, $code);
-            $stmt_form->execute();
-            $stmt_form->close();
-
-            echo json_encode(["success" => true, "message" => "Alertă și formular salvate."]);
-        } else {
-            echo json_encode(["success" => false, "message" => "Eroare la salvarea alertei: " . $stmt->error]);
-        }
-        $stmt->close();
-    } else {
-        echo json_encode(["success" => false, "message" => "Date lipsă sau invalide."]);
-    }
-} else {
-    echo json_encode(["success" => false, "message" => "Metodă invalidă."]);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+  echo json_encode(["success" => false, "message" => "Metodă invalidă."]);
+  exit();
 }
-$conn->close();
+
+$user_id = $_POST['user_id'] ?? '';
+$latitude = $_POST['latitude'] ?? '';
+$longitude = $_POST['longitude'] ?? '';
+$severity = $_POST['severity'] ?? '';
+
+if (!$user_id || !is_numeric($latitude) || !is_numeric($longitude) || !is_numeric($severity)) {
+  echo json_encode(["success" => false, "message" => "Date lipsă sau invalide."]);
+  exit();
+}
+
+$timestamp = date('Y-m-d H:i:s');
+$status = 'new';
+
+// Estimare locație și autoritate simplificată
+$location = "Coord: $latitude, $longitude";
+$autoritate = 'Necunoscută';
+
+if ($latitude > 44.3 && $latitude < 44.6 && $longitude > 25.9 && $longitude < 26.3) {
+  $location = "București";
+  $autoritate = "Sectia 1 de politie";
+} elseif ($latitude > 45.7 && $latitude < 45.8 && $longitude > 21.1 && $longitude < 21.3) {
+  $location = "Timișoara";
+  $autoritate = "Poliția Timișoara";
+} elseif ($latitude > 47.0 && $latitude < 47.2 && $longitude > 27.5 && $longitude < 27.7) {
+  $location = "Iași";
+  $autoritate = "Poliția Iași";
+}
+
+// Inserare alertă
+$stmt = $conn->prepare("INSERT INTO alerts (user_id, latitude, longitude, severity, timestamp, status, location, authority)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt->bind_param("sddissss", $user_id, $latitude, $longitude, $severity, $timestamp, $status, $location, $autoritate);
+$stmt->execute();
+$alert_id = $conn->insert_id;
+
+// Pregătim formularul asociat
+$code = 'SAF-' . date('Ymd') . '-' . rand(100, 999);
+$severity_text = "Nivel $severity";
+$form_status = 'new';
+$details = "Alertă generată automat de sistem pentru analiza cazului raportat de user ID: $user_id. Regiune detectată: $location. Autoritate desemnată automat: $autoritate.";
+$zero = 0;
+
+// Inserare formular
+$formStmt = $conn->prepare("INSERT INTO forms (user_id, location, severity, details, timestamp, alert_id, autoritate, status, code)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$formStmt->bind_param("issssisss", $zero, $location, $severity_text, $details, $timestamp, $alert_id, $autoritate, $form_status, $code);
+$formStmt->execute();
+
+// Răspuns către aplicație
+echo json_encode([
+  "success" => true,
+  "alert_id" => $alert_id,
+  "location" => $location,
+  "autoritate" => $autoritate,
+  "form_code" => $code
+]);
+exit();

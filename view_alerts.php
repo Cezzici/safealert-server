@@ -1,115 +1,40 @@
 <?php
-session_start();
-if (!isset($_SESSION['user_id'])) {
-  header("Location: login.php");
-  exit();
-}
+require_once 'header.php';
 require_once 'db.php';
 
-$result = $conn->query("SELECT * FROM alerts ORDER BY timestamp DESC");
+// Preluăm alertele din baza de date
+$sql = "SELECT * FROM alerts ORDER BY timestamp DESC";
+$result = $conn->query($sql);
 ?>
-<!DOCTYPE html>
-<html lang="ro">
-<head>
-  <meta charset="UTF-8">
-  <title>Alerte primite</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 20px;
-      background-color: #f5f3f7;
-    }
 
-    h1 {
-      color: #50276E;
-      text-align: center;
-      margin-bottom: 30px;
-    }
+<div class="card">
+  <h2>📨 Alerte primite</h2>
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background-color: white;
-      box-shadow: 0 0 10px rgba(80, 39, 110, 0.1);
-      border-radius: 10px;
-      overflow: hidden;
-    }
+  <div style="margin-bottom: 20px;">
+    <a href="dashboard.php" style="display: inline-block; background-color: #5e4283; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 500;">
+      ⬅️ Înapoi la Dashboard
+    </a>
+  </div>
 
-    th, td {
-      padding: 14px;
-      border-bottom: 1px solid #ddd;
-      text-align: left;
-    }
-
-    th {
-      background-color: #7B3FA4;
-      color: white;
-    }
-
-    tr:nth-child(even) {
-      background-color: #f2f2f2;
-    }
-
-    a.button {
-      background-color: #7B3FA4;
-      color: white;
-      padding: 8px 14px;
-      border: none;
-      border-radius: 6px;
-      text-decoration: none;
-      font-size: 14px;
-    }
-
-    a.button:hover {
-      background-color: #632f94;
-    }
-
-    .no-form {
-      color: gray;
-      font-style: italic;
-    }
-  </style>
-</head>
-<body>
-
-  <h1>Alerte primite</h1>
-
-  <table>
-    <tr>
-      <th>ID</th>
-      <th>User</th>
-      <th>Severitate</th>
-      <th>Data</th>
-      <th>Acțiune</th>
-    </tr>
-
+  <?php if ($result->num_rows > 0): ?>
     <?php while ($row = $result->fetch_assoc()): ?>
-      <tr>
-        <td><?= $row['id'] ?></td>
-        <td><?= htmlspecialchars($row['user_id']) ?></td>
-        <td><?= htmlspecialchars($row['severity']) ?></td>
-        <td><?= htmlspecialchars($row['timestamp']) ?></td>
-        <td>
-          <?php
-          $alertId = $row['id'];
-          $stmtForm = $conn->prepare("SELECT id FROM forms WHERE alert_id = ?");
-          $stmtForm->bind_param("i", $alertId);
-          $stmtForm->execute();
-          $resultForm = $stmtForm->get_result();
-          $form = $resultForm->fetch_assoc();
-          if ($form):
-          ?>
-            <a class="button" href="form_view.php?alert_id=<?= $alertId ?>">Deschide</a>
-          <?php else: ?>
-            <span class="no-form">Fără formular</span>
-          <?php endif;
-          $stmtForm->close();
-          ?>
-        </td>
-      </tr>
+      <div style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #5e4283; background-color: #fdfdff; border-radius: 8px;">
+        <p><strong>ID alertă:</strong> <?= htmlspecialchars($row['id']) ?></p>
+        <p><strong>Utilizator:</strong> <?= htmlspecialchars($row['user_id']) ?></p>
+        <p><strong>Gravitate:</strong> <span style="color: <?= $row['severity'] >= 4 ? 'red' : '#5e4283' ?>;"><strong><?= $row['severity'] ?></strong></span></p>
+        <p><strong>Data:</strong> <?= htmlspecialchars($row['timestamp']) ?></p>
+        <p><strong>Coordonate GPS:</strong> <?= htmlspecialchars($row['latitude']) ?>, <?= htmlspecialchars($row['longitude']) ?></p>
+        <p><strong>Status:</strong> <?= htmlspecialchars($row['status']) ?></p>
+        <div style="margin-top: 10px;">
+          <a href="form_view.php?alert_id=<?= $row['id'] ?>">🔍 Vezi formular</a>
+          &nbsp;&nbsp;|&nbsp;&nbsp;
+          <a href="intervention_view.php?alert_id=<?= $row['id'] ?>">🚑 Vezi intervenție</a>
+        </div>
+      </div>
     <?php endwhile; ?>
-  </table>
+  <?php else: ?>
+    <p>Nu există alerte înregistrate.</p>
+  <?php endif; ?>
+</div>
 
-</body>
-</html>
+<?php include 'footer.php'; ?>

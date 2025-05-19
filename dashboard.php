@@ -1,109 +1,37 @@
 <?php
-session_start();
-if (!isset($_SESSION['user_id'])) {
-  header("Location: login.php");
-  exit();
+require_once 'header.php'; // include sesiune, navbar și stil global
+
+// Titlu dashboard în funcție de rol
+if ($role === 'admin') {
+  $dashboardTitle = "Panou Administrator";
+} elseif ($role === 'autoritate') {
+  $dashboardTitle = "Panou Autoritate";
+} elseif ($role === 'asistent') {
+  $dashboardTitle = "Panou Asistență";
+} else {
+  $dashboardTitle = "Panou General SafeAlert";
 }
-$username = $_SESSION['username'];
-$role = $_SESSION['role'];
 ?>
-<!DOCTYPE html>
-<html lang="ro">
-<head>
-  <meta charset="UTF-8">
-  <title>SafeAlert Dashboard</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #005bbb;
-      color: white;
-    }
 
-    header {
-      background-color: #003f88;
-      padding: 20px;
-      text-align: center;
-      font-size: 28px;
-      font-weight: bold;
-    }
+<div class="card">
+  <h2><?= $dashboardTitle ?></h2>
+  <p>Bun venit, <strong><?= htmlspecialchars($username) ?></strong>! Selectează o secțiune pentru a continua.</p>
+</div>
 
-    .user-info {
-      text-align: center;
-      font-size: 16px;
-      margin-top: -10px;
-      margin-bottom: 10px;
-    }
+<div class="card">
+  <h3>🔍 Accese rapide</h3>
+  <ul style="list-style: none; padding-left: 0;">
+    <li><a href="view_alerts.php">📨 Alerte primite</a></li>
+    <li><a href="view_all_forms.php">📝 Formulare completate</a></li>
+    <li><a href="view_interventions.php">🚑 Intervenții înregistrate</a></li>
+    <li><a href="view_authorities.php">🏢 Autorități disponibile</a></li>
+  </ul>
+</div>
 
-    nav {
-      display: flex;
-      background-color: #002855;
-    }
+<div class="card">
+  <h3>ℹ️ Informații utile</h3>
+  <p>Aplicația <strong>SafeAlert</strong> este un sistem dedicat sprijinirii victimelor violenței domestice printr-un mecanism discret de alertare și gestionare a cazurilor.</p>
+  <p>Toate datele sunt confidențiale și accesibile doar utilizatorilor autentificați în platformă.</p>
+</div>
 
-    nav button {
-      flex: 1;
-      padding: 15px;
-      font-size: 16px;
-      background: none;
-      border: none;
-      color: white;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-
-    nav button:hover,
-    nav button.active {
-      background-color: #004a9f;
-    }
-
-    #content {
-      height: calc(100vh - 140px); /* header + user-info + nav */
-      background-color: #f5f3f7;
-    }
-
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      background-color: transparent;
-      display: block;
-    }
-  </style>
-</head>
-<body>
-
-  <header>SafeAlert – Dashboard Central</header>
-
-  <div class="user-info">
-    Autentificat ca: <strong><?= htmlspecialchars($username) ?></strong> (<?= htmlspecialchars($role) ?>)
-    | <a href="logout.php" style="color: #ffcccb; text-decoration: underline;">Logout</a>
-  </div>
-
-  <nav>
-    <?php if ($role === 'admin'): ?>
-      <button onclick="loadPage('view_all_forms.php', this)">Formulare Înregistrate</button>
-      <button onclick="loadPage('view_authorities.php', this)">Lista Autorități</button>
-      <button onclick="loadPage('intervention_view.php', this)">Intervenții</button>
-      <button onclick="loadPage('view_interventions.php', this)">Lista Intervenții</button>
-    <?php elseif ($role === 'authority'): ?>
-      <button onclick="loadPage('view_alerts.php', this)">Alerte</button>
-      <button onclick="loadPage('view_interventions.php', this)">Intervenții</button>
-    <?php elseif ($role === 'ngo'): ?>
-      <button onclick="loadPage('view_all_forms.php', this)">Formulare Înregistrate</button>
-    <?php endif; ?>
-  </nav>
-
-  <div id="content">
-    <iframe id="frame" src="welcome.php"></iframe>
-  </div>
-
-  <script>
-    function loadPage(page, btn) {
-      document.getElementById('frame').src = page;
-      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    }
-  </script>
-
-</body>
-</html>
+<?php include 'footer.php'; ?>

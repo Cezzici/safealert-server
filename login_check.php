@@ -2,39 +2,34 @@
 session_start();
 require_once 'db.php';
 
-$username = $_POST['username'] ?? '';
-$password = $_POST['password'] ?? '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $username = trim($_POST['username']);
+  $password = $_POST['password'];
 
-$stmt = $conn->prepare("SELECT id, password_hash, role FROM users WHERE username = ?");
-$stmt->bind_param("s", $username);
-$stmt->execute();
-$result = $stmt->get_result();
+  $stmt = $conn->prepare("SELECT id, username, password_hash, role FROM users WHERE username = ?");
+  $stmt->bind_param("s", $username);
+  $stmt->execute();
+  $result = $stmt->get_result();
 
-if ($user = $result->fetch_assoc()) {
+  if ($result && $result->num_rows === 1) {
+    $user = $result->fetch_assoc();
+
     if (password_verify($password, $user['password_hash'])) {
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['role'] = $user['role'];
-        $_SESSION['username'] = $username;
+      // Autentificare reușită
+      $_SESSION['user_id'] = $user['id'];
+      $_SESSION['username'] = $user['username'];
+      $_SESSION['role'] = $user['role'];
 
-        // 🔁 Redirecționare pe baza rolului
-        switch ($user['role']) {
-            case 'admin':
-                header("Location: dashboard.php");
-                break;
-            case 'authority':
-                header("Location: view_alerts.php");
-                break;
-            case 'ngo':
-                header("Location: view_forms.php");
-                break;
-            default:
-                echo "Rol necunoscut.";
-        }
-        exit();
-    } else {
-        echo "Parolă incorectă.";
+      header("Location: dashboard.php");
+      exit();
     }
+  }
+
+  // Autentificare eșuată
+  header("Location: login.php?error=1");
+  exit();
 } else {
-    echo "Utilizator inexistent.";
+  // Acces direct nepermis
+  header("Location: login.php");
+  exit();
 }
-?>

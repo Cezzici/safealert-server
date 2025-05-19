@@ -1,75 +1,41 @@
 <?php
-session_start();
-if (!isset($_SESSION['user_id'])) {
-  header("Location: login.php");
-  exit();
-}
+require_once 'header.php';
 require_once 'db.php';
 
 $result = $conn->query("SELECT * FROM forms ORDER BY timestamp DESC");
 ?>
-<!DOCTYPE html>
-<html lang="ro">
-<head>
-  <meta charset="UTF-8">
-  <title>Formulare Înregistrate</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      padding: 20px;
-      background: #f5f3f7;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      background: white;
-    }
-    th, td {
-      padding: 12px;
-      border: 1px solid #ddd;
-    }
-    th {
-      background-color: #50276E;
-      color: white;
-    }
-    tr:hover {
-      background-color: #f1f1f1;
-    }
-    a.button {
-      background-color: #7B3FA4;
-      color: white;
-      padding: 6px 12px;
-      text-decoration: none;
-      border-radius: 6px;
-    }
-  </style>
-</head>
-<body>
 
-  <h1>Formulare Înregistrate</h1>
+<div class="card">
+  <h2>🗂️ Formulare înregistrate</h2>
 
-  <table>
-    <tr>
-      <th>ID</th>
-      <th>Cod</th>
-      <th>Locație</th>
-      <th>Gravitate</th>
-      <th>Dată</th>
-      <th>Afișare</th>
-    </tr>
+  <div style="margin-top: 10px;">
+    <a href="form_view.php?id=<?= $form['id'] ?>">🔍 Vezi formular</a>
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <a href="intervention_view.php?form_id=<?= $form['id'] ?>">🚑 Vezi intervenții</a>
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <a href="delete_form.php?id=<?= $form['id'] ?>" onclick="return confirm('Ești sigur că vrei să ștergi acest formular?');" style="color: red;">🗑️ Șterge</a>
+  </div>
 
-    <?php while ($row = $result->fetch_assoc()): ?>
-    <tr>
-      <td><?= $row['id'] ?></td>
-      <td><?= htmlspecialchars($row['code']) ?></td>
-      <td><?= htmlspecialchars($row['location']) ?></td>
-      <td><?= htmlspecialchars($row['severity']) ?></td>
-      <td><?= htmlspecialchars($row['timestamp']) ?></td>
-      <td><a class="button" href="form_view.php?id=<?= $row['id'] ?>">Deschide</a></td>
-    </tr>
+  <?php if ($result && $result->num_rows > 0): ?>
+    <?php while ($form = $result->fetch_assoc()): ?>
+      <div style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #5e4283; background-color: #fdfdff; border-radius: 8px;">
+        <p><strong>ID formular:</strong> <?= htmlspecialchars($form['id']) ?></p>
+        <p><strong>Cod intern:</strong> <?= htmlspecialchars($form['code']) ?></p>
+        <p><strong>Alertă asociată:</strong> <?= htmlspecialchars($form['alert_id'] ?? '-') ?></p>
+        <p><strong>Locație:</strong> <?= htmlspecialchars($form['location']) ?></p>
+        <p><strong>Gravitate:</strong> <?= htmlspecialchars($form['severity']) ?></p>
+        <p><strong>Status:</strong> <?= htmlspecialchars($form['status'] ?? '-') ?></p>
+        <p><strong>Data completării:</strong> <?= htmlspecialchars($form['timestamp']) ?></p>
+        <div style="margin-top: 10px;">
+          <a href="form_view.php?id=<?= $form['id'] ?>">🔍 Vezi formular</a>
+          &nbsp;&nbsp;|&nbsp;&nbsp;
+          <a href="intervention_view.php?form_id=<?= $form['id'] ?>">🚑 Vezi intervenții</a>
+        </div>
+      </div>
     <?php endwhile; ?>
-  </table>
+  <?php else: ?>
+    <p>Nu există formulare înregistrate.</p>
+  <?php endif; ?>
+</div>
 
-</body>
-</html>
+<?php include 'footer.php'; ?>

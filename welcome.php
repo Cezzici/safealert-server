@@ -1,71 +1,70 @@
-<?php
-session_start();
-if (!isset($_SESSION['user_id'])) {
-  header("Location: login.php");
-  exit();
-}
-$username = $_SESSION['username'];
-$role = $_SESSION['role'];
-?>
 <!DOCTYPE html>
 <html lang="ro">
 <head>
   <meta charset="UTF-8">
-  <title>Bine ai venit – SafeAlert</title>
+  <title>SafeAlert - Bine ai venit</title>
+  <link rel="icon" href="LOGO SAFEALERT.png">
   <style>
-    html, body {
+    body {
       margin: 0;
-      padding: 0;
-      height: 100%;
-      width: 100%;
-      background-color: transparent;
       font-family: 'Segoe UI', sans-serif;
+      background-color: #f2f0f7;
       display: flex;
-      justify-content: center;
       align-items: center;
-      box-sizing: border-box;
+      justify-content: center;
+      height: 100vh;
     }
 
-    .box {
+    .welcome-box {
       background-color: white;
-      padding: 40px;
       border-radius: 16px;
-      box-shadow: 0 0 15px rgba(80, 39, 110, 0.1);
+      box-shadow: 0 0 20px rgba(0,0,0,0.08);
+      padding: 50px;
       text-align: center;
-      max-width: 480px;
-      width: 90%;
-      animation: fadeIn 0.4s ease-out;
+      max-width: 500px;
+      width: 100%;
     }
 
-    h1 {
-      color: #50276E;
+    .welcome-box img {
+      height: 120px;
+      margin-bottom: 20px;
+    }
+
+    .welcome-box h1 {
+      color: #5e4283;
+      font-size: 26px;
       margin-bottom: 10px;
-      font-size: 24px;
     }
 
-    p {
-      font-size: 18px;
-      color: #333;
-      margin: 10px 0;
+    .welcome-box p {
+      font-size: 15px;
+      color: #555;
+      margin-bottom: 30px;
     }
 
-    strong {
-      color: #7B3FA4;
+    .welcome-box a.button {
+      display: inline-block;
+      background-color: #5e4283;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+    .welcome-box a.button:hover {
+      background-color: #4a3570;
     }
   </style>
 </head>
 <body>
-
-  <div class="box">
-    <h1>Bine ai venit, <?= htmlspecialchars($username) ?>!</h1>
-    <p>Rolul tău este: <strong><?= htmlspecialchars($role) ?></strong></p>
-    <p>Selectează o secțiune din meniul de sus pentru a începe.</p>
+  <div class="welcome-box">
+    <img src="LOGO SAFEALERT.png" alt="SafeAlert">
+    <h1>Bine ai venit în SafeAlert</h1>
+    <p>Platformă dedicată intervenției rapide și discrete pentru victimele violenței domestice.</p>
+    <a href="login.php" class="button">Autentificare</a>
   </div>
-
 </body>
 </html>

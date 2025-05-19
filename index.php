@@ -1,5 +1,5 @@
 <?php
-// Start PHP tag, you can add session handling here if needed
+include 'header.php';
 ?>
 
 <!DOCTYPE html>
