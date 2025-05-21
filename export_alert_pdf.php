@@ -26,7 +26,7 @@ if (!isset($_GET['alert_id'])) {
 }
 
 $alert_id = (int)$_GET['alert_id'];
-$query = "SELECT * FROM alerts WHERE id = $alert_id";
+$query = "SELECT * FROM alerts WHERE alert_id = $alert_id";
 $result = $conn->query($query);
 
 if ($result->num_rows === 0) {
@@ -39,7 +39,7 @@ $user_id = $alert['user_id'];
 $lat = $alert['latitude'];
 $long = $alert['longitude'];
 $severity = $alert['severity'];
-$timestamp = $alert['timestamp'];
+$timestamp = $alert['created_at'];
 $region = detectRegion($lat, $long);
 
 // Autoritate
@@ -69,7 +69,6 @@ $pdf->Ln(10);
 $pdf->SetFont('Helvetica', '', 12);
 $pdf->SetTextColor(0);
 
-$pdf->SetFont('Helvetica', '', 12);
 $pdf->Cell(60, 8, 'Location (Locatie):');
 $pdf->SetFont('Helvetica', 'B', 12);
 $pdf->Cell(0, 8, "GPS Detected: Regiune $region, Coordonate $lat, $long", 0, 1);

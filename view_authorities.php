@@ -2,11 +2,16 @@
 require_once 'header.php';
 require_once 'db.php';
 
-// Grupăm câte formulare are fiecare autoritate (după nume)
+// Grupăm câte formulare are fiecare autoritate pe baza authority_id
 $form_counts = [];
-$q = $conn->query("SELECT autoritate, COUNT(*) as total FROM forms GROUP BY autoritate");
+$sql = "
+  SELECT f.authority_id, COUNT(*) as total 
+  FROM forms f
+  GROUP BY f.authority_id
+";
+$q = $conn->query($sql);
 while ($row = $q->fetch_assoc()) {
-  $form_counts[$row['autoritate']] = $row['total'];
+  $form_counts[$row['authority_id']] = $row['total'];
 }
 
 // Preluăm toate autoritățile
@@ -39,7 +44,7 @@ $result = $conn->query("SELECT * FROM authorities ORDER BY region ASC, name ASC"
         <p><strong>Date contact:</strong> <?= htmlspecialchars($auth['contact_details'] ?? '-') ?></p>
         <p><strong>Status:</strong> <?= htmlspecialchars($auth['status'] ?? '-') ?></p>
         <p><strong>Cazuri alocate:</strong>
-          <?= isset($form_counts[$auth['name']]) ? $form_counts[$auth['name']] : 0 ?>
+          <?= isset($form_counts[$auth['authority_id']]) ? $form_counts[$auth['authority_id']] : 0 ?>
         </p>
       </div>
     <?php endwhile; ?>

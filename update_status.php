@@ -13,28 +13,28 @@ require_once 'db.php';
 // Verificăm metoda POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Preluăm valorile din POST
-    $id = isset($_POST['id']) ? (int)$_POST['id'] : null;
+    $alert_id = isset($_POST['id']) ? (int)$_POST['id'] : null;
     $status = isset($_POST['status']) ? trim($_POST['status']) : null;
 
     // Validare simplă
-    if ($id && $status) {
-        // Escape pentru siguranță
-        $status = $conn->real_escape_string($status);
-
-        // Construim interogarea
-        $sql = "UPDATE alerts SET status = '$status' WHERE id = $id";
-        $result = $conn->query($sql);
-
-        // Răspuns în funcție de rezultat
-        if ($result) {
-            if ($conn->affected_rows === 0) {
-                echo json_encode(["success" => false, "message" => "Nicio modificare. ID inexistent sau status deja setat."]);
-            } else {
-                echo json_encode(["success" => true, "message" => "Status actualizat pentru alerta #$id"]);
-            }
-        } else {
-            echo json_encode(["success" => false, "message" => "Eroare SQL: " . $conn->error]);
+    if ($alert_id && $status) {
+        // Pregătim interogarea pentru a evita SQL injection
+        $stmt = $conn->prepare("UPDATE alerts SET status = ? WHERE alert_id = ?");
+        if (!$stmt) {
+            echo json_encode(["success" => false, "message" => "Eroare pregătire interogare: " . $conn->error]);
+            exit();
         }
+
+        $stmt->bind_param("si", $status, $alert_id);
+        $stmt->execute();
+
+        if ($stmt->affected_rows === 0) {
+            echo json_encode(["success" => false, "message" => "Nicio modificare. ID inexistent sau status deja setat."]);
+        } else {
+            echo json_encode(["success" => true, "message" => "Status actualizat pentru alerta #$alert_id"]);
+        }
+
+        $stmt->close();
     } else {
         echo json_encode(["success" => false, "message" => "Date lipsă: id sau status."]);
     }

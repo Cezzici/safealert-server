@@ -14,10 +14,10 @@ function detectRegion($lat, $long) {
 }
 
 if (isset($_GET['alert_id'])) {
-    $alert_id = $_GET['alert_id'];
+    $alert_id = (int)$_GET['alert_id'];
 
     // Preluăm alerta
-    $alert_sql = "SELECT * FROM alerts WHERE id = $alert_id";
+    $alert_sql = "SELECT * FROM alerts WHERE alert_id = $alert_id";
     $alert_result = $conn->query($alert_sql);
 
     if ($alert_result->num_rows > 0) {
@@ -27,34 +27,44 @@ if (isset($_GET['alert_id'])) {
         $long = $alert['longitude'];
         $severity = $alert['severity'];
         $user_id = $alert['user_id'];
+        $authority_id = $alert['authority_id'];
 
         $region = detectRegion($lat, $long);
 
-        // Caută autoritate activă în regiune
-        $authority = null;
-        $auth_query = "SELECT name FROM authorities WHERE region = '$region' AND status = 'activ' LIMIT 1";
-        $auth_result = $conn->query($auth_query);
-        if ($auth_result && $auth_result->num_rows > 0) {
-            $authority = $auth_result->fetch_assoc()['name'];
+        // Caută autoritate activă în regiune dacă nu există în alertă
+        if (empty($authority_id)) {
+            $auth_query = "SELECT authority_id FROM authorities WHERE region = '$region' AND status = 'activ' LIMIT 1";
+            $auth_result = $conn->query($auth_query);
+            if ($auth_result && $auth_result->num_rows > 0) {
+                $authority_id = $auth_result->fetch_assoc()['authority_id'];
+            } else {
+                $authority_id = null;
+            }
         }
 
         // Construim detaliile
         $details = "Alertă generată automat de sistem pentru analiza cazului raportat de user ID: $user_id. ";
         $details .= "Regiune detectată: $region. ";
-        $details .= $authority 
-            ? "Autoritate desemnată automat: $authority." 
+        $details .= $authority_id 
+            ? "Autoritate desemnată automat: $authority_id." 
             : "NU s-a găsit autoritate disponibilă în zonă.";
 
         // Formatare locație
         $location = "Coord: $lat, $long";
 
-        // Inserăm în formular
-        $insert_sql = "INSERT INTO forms (location, severity, details, timestamp)
-                       VALUES ('$location', 'Nivel $severity', '$details', NOW())";
+        // Cod formular generat
+        $code = 'SAF-' . date('Ymd') . '-' . rand(100, 999);
 
-        if ($conn->query($insert_sql)) {
+        // Inserăm în formular
+        $insert_sql = "INSERT INTO forms (user_id, location, severity, details, created_at, alert_id, authority_id, status, code)
+                       VALUES (?, ?, ?, ?, NOW(), ?, ?, 'new', ?)";
+        $stmt = $conn->prepare($insert_sql);
+        $severity_text = "Nivel $severity";
+        $stmt->bind_param("isssiss", $user_id, $location, $severity_text, $details, $alert_id, $authority_id, $code);
+
+        if ($stmt->execute()) {
             // Update status alertă
-            $conn->query("UPDATE alerts SET status = 'in_progress' WHERE id = $alert_id");
+            $conn->query("UPDATE alerts SET status = 'in_progress' WHERE alert_id = $alert_id");
             echo "Formular generat cu succes!";
         } else {
             echo "Eroare la salvare formular: " . $conn->error;

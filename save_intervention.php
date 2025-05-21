@@ -1,48 +1,39 @@
 <?php
-session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'authority') {
-  header("Location: login.php");
-  exit();
-}
-
 require_once 'db.php';
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo "Metodă invalidă.";
+    exit();
+}
+
 $form_id = $_POST['form_id'] ?? null;
-$intervention_type = trim($_POST['intervention_type'] ?? '');
-$responsible_person = trim($_POST['responsible_person'] ?? '');
-$details = trim($_POST['details'] ?? '');
-$status = trim($_POST['status'] ?? '');
-$timestamp = date('Y-m-d H:i:s');
+$intervention_id = $_POST['intervention_id'] ?? null;
+$intervention_type = $_POST['intervention_type'] ?? '';
+$responsible_person = $_POST['responsible_person'] ?? '';
+$details = $_POST['details'] ?? '';
+$status = $_POST['status'] ?? '';
+$created_at = date('Y-m-d H:i:s');
 
-if (!is_numeric($form_id) || !$intervention_type || !$status) {
-  echo "<script>alert('⚠️ Toate câmpurile obligatorii trebuie completate.'); window.history.back();</script>";
-  exit();
+// Validare minimă
+if (!$form_id || empty($intervention_type) || empty($responsible_person) || empty($details)) {
+    echo "Date lipsă.";
+    exit();
 }
 
-$stmt = $conn->prepare("
-  INSERT INTO interventions (form_id, intervention_type, responsible_person, details, status, timestamp)
-  VALUES (?, ?, ?, ?, ?, ?)
-");
-
-if (!$stmt) {
-  echo "<script>alert('❌ Eroare la pregătirea interogării SQL: " . $conn->error . "'); window.history.back();</script>";
-  exit();
+if ($intervention_id) {
+    // UPDATE
+    $stmt = $conn->prepare("UPDATE interventions SET intervention_type = ?, responsible_person = ?, details = ?, status = ?, created_at = ? WHERE intervention_id = ?");
+    $stmt->bind_param("sssssi", $intervention_type, $responsible_person, $details, $status, $created_at, $intervention_id);
+} else {
+    // INSERT
+    $stmt = $conn->prepare("INSERT INTO interventions (form_id, intervention_type, responsible_person, details, status, created_at) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("isssss", $form_id, $intervention_type, $responsible_person, $details, $status, $created_at);
 }
-
-// fix: folosim variabile intermediare
-$type = $intervention_type;
-$person = $responsible_person;
-$info = $details;
-$stat = $status;
-$time = $timestamp;
-
-$stmt->bind_param("isssss", $form_id, $type, $person, $info, $stat, $time);
 
 if ($stmt->execute()) {
-  echo "<script>alert('✅ Intervenția a fost salvată cu succes.'); window.location.href = 'form_view.php?id=$form_id';</script>";
+    header("Location: form_view.php?form_id=" . urlencode($form_id));
+    exit();
 } else {
-  echo "<script>alert('❌ Eroare la salvarea intervenției: " . $stmt->error . "'); window.history.back();</script>";
+    echo "Eroare la salvare.";
+    exit();
 }
-
-$stmt->close();
-$conn->close();

@@ -4,7 +4,7 @@ $host = "127.0.0.1";        // sau "localhost"
 $port = "3306";             // dacă folosești portul 3307 în XAMPP
 $user = "root";             // utilizatorul implicit
 $password = "";             // de obicei e gol în XAMPP
-$database = "safealert";    // numele bazei de date
+$database = "safealertbun";  // noua bază
 
 // Conectare
 $conn = new mysqli($host, $user, $password, $database, $port);

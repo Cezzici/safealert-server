@@ -8,13 +8,12 @@ if (!isset($_SESSION['user_id'])) {
 $username = $_SESSION['username'];
 $role = $_SESSION['role'];
 ?>
-
 <!DOCTYPE html>
 <html lang="ro">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>SafeAlert</title>
-  <link rel="icon" href="LOGO SAFEALERT.png">
+  <link rel="icon" href="LOGO SAFEALERT.png" />
   <style>
     body {
       margin: 0;
@@ -63,26 +62,26 @@ $role = $_SESSION['role'];
       max-width: 1000px;
       margin: 0 auto;
     }
-    .card {
-      background-color: white;
-      border-radius: 12px;
-      box-shadow: 0 0 12px rgba(0,0,0,0.05);
-      padding: 25px 30px;
-      margin-bottom: 30px;
+    .menu-button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 15px 32px;
+      text-align: center;
+      font-size: 16px;
+      margin: 10px 2px;
+      cursor: pointer;
+      border-radius: 8px;
     }
-    a {
-      color: #5e4283;
-      font-weight: 500;
-    }
-    a:hover {
-      text-decoration: underline;
+    .menu-button:hover {
+      background-color: #45a049;
     }
   </style>
 </head>
 <body>
   <div class="navbar">
     <div class="left">
-      <img src="LOGO SAFEALERT.png" alt="SafeAlert Logo">
+      <img src="LOGO SAFEALERT.png" alt="SafeAlert Logo" />
       <h1>SafeAlert - Interfață Secure</h1>
     </div>
     <div class="right">

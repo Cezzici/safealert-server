@@ -7,64 +7,105 @@ header('Content-Type: application/json');
 require_once 'db.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-  echo json_encode(["success" => false, "message" => "Metodă invalidă."]);
-  exit();
+    echo json_encode(["success" => false, "message" => "Metodă invalidă."]);
+    exit();
 }
 
-$user_id = $_POST['user_id'] ?? '';
+// Preluare date din POST
+$uuid = $_POST['user_id'] ?? '';
+$display_name = $_POST['name'] ?? $uuid;
 $latitude = $_POST['latitude'] ?? '';
 $longitude = $_POST['longitude'] ?? '';
 $severity = $_POST['severity'] ?? '';
 
-if (!$user_id || !is_numeric($latitude) || !is_numeric($longitude) || !is_numeric($severity)) {
-  echo json_encode(["success" => false, "message" => "Date lipsă sau invalide."]);
-  exit();
+// Validare date
+if (empty($uuid) || !is_numeric($latitude) || !is_numeric($longitude) || !is_numeric($severity)) {
+    echo json_encode(["success" => false, "message" => "Date lipsă sau invalide."]);
+    exit();
 }
 
 $timestamp = date('Y-m-d H:i:s');
 $status = 'new';
 
-// Estimare locație și autoritate simplificată
+// Detectare locație și autoritate
 $location = "Coord: $latitude, $longitude";
-$autoritate = 'Necunoscută';
+$authority_id = null;
+$authority_name = 'Necunoscută';
 
-if ($latitude > 44.3 && $latitude < 44.6 && $longitude > 25.9 && $longitude < 26.3) {
-  $location = "București";
-  $autoritate = "Sectia 1 de politie";
-} elseif ($latitude > 45.7 && $latitude < 45.8 && $longitude > 21.1 && $longitude < 21.3) {
-  $location = "Timișoara";
-  $autoritate = "Poliția Timișoara";
-} elseif ($latitude > 47.0 && $latitude < 47.2 && $longitude > 27.5 && $longitude < 27.7) {
-  $location = "Iași";
-  $autoritate = "Poliția Iași";
+$mapping = [
+    'București' => ['lat_min' => 44.40, 'lat_max' => 44.45, 'long_min' => 26.09, 'long_max' => 26.12, 'name' => 'Sectia 1 de politie'],
+    'Timișoara' => ['lat_min' => 45.74, 'lat_max' => 45.76, 'long_min' => 21.20, 'long_max' => 21.22, 'name' => 'Poliția Timișoara'],
+    'Iași' => ['lat_min' => 47.15, 'lat_max' => 47.17, 'long_min' => 27.60, 'long_max' => 27.62, 'name' => 'Poliția Iași']
+];
+
+foreach ($mapping as $region => $coords) {
+    if ($latitude >= $coords['lat_min'] && $latitude <= $coords['lat_max'] &&
+        $longitude >= $coords['long_min'] && $longitude <= $coords['long_max']) {
+        $location = $region;
+
+        $stmtAuth = $conn->prepare("SELECT authority_id FROM authorities WHERE name = ? LIMIT 1");
+        $stmtAuth->bind_param("s", $coords['name']);
+        $stmtAuth->execute();
+        $resAuth = $stmtAuth->get_result();
+        if ($rowAuth = $resAuth->fetch_assoc()) {
+            $authority_id = $rowAuth['authority_id'];
+            $authority_name = $coords['name'];
+        }
+        $stmtAuth->close();
+        break;
+    }
 }
 
-// Inserare alertă
-$stmt = $conn->prepare("INSERT INTO alerts (user_id, latitude, longitude, severity, timestamp, status, location, authority)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-$stmt->bind_param("sddissss", $user_id, $latitude, $longitude, $severity, $timestamp, $status, $location, $autoritate);
+// Căutăm/creăm utilizatorul
+$user_id_numeric = null;
+$stmt = $conn->prepare("SELECT user_id, name FROM app_users WHERE uuid = ?");
+$stmt->bind_param("s", $uuid);
 $stmt->execute();
-$alert_id = $conn->insert_id;
+$result = $stmt->get_result();
 
-// Pregătim formularul asociat
+if ($row = $result->fetch_assoc()) {
+    $user_id_numeric = $row['user_id'];
+
+    if (empty($row['name']) || $row['name'] !== $display_name) {
+        $updateStmt = $conn->prepare("UPDATE app_users SET name = ? WHERE uuid = ?");
+        $updateStmt->bind_param("ss", $display_name, $uuid);
+        $updateStmt->execute();
+        $updateStmt->close();
+    }
+
+} else {
+    $insertUser = $conn->prepare("INSERT INTO app_users (uuid, name) VALUES (?, ?)");
+    $insertUser->bind_param("ss", $uuid, $display_name);
+    $insertUser->execute();
+    $user_id_numeric = $insertUser->insert_id;
+    $insertUser->close();
+}
+$stmt->close();
+
+// 🔥 INSERT corect în alerts (cu VARCHAR pentru authority_id!)
+$stmtAlert = $conn->prepare("INSERT INTO alerts (user_id, latitude, longitude, severity, created_at, status, location, authority_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+$stmtAlert->bind_param("sddissss", $uuid, $latitude, $longitude, $severity, $timestamp, $status, $location, $authority_id);
+$stmtAlert->execute();
+$alert_id = $stmtAlert->insert_id;
+$stmtAlert->close();
+
+// Formular legat de alertă
 $code = 'SAF-' . date('Ymd') . '-' . rand(100, 999);
 $severity_text = "Nivel $severity";
 $form_status = 'new';
-$details = "Alertă generată automat de sistem pentru analiza cazului raportat de user ID: $user_id. Regiune detectată: $location. Autoritate desemnată automat: $autoritate.";
-$zero = 0;
+$details = "Alertă generată automat de sistem pentru analiza cazului raportat de user ID: $display_name. Regiune detectată: $location. Autoritate desemnată automat: $authority_name.";
 
-// Inserare formular
-$formStmt = $conn->prepare("INSERT INTO forms (user_id, location, severity, details, timestamp, alert_id, autoritate, status, code)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-$formStmt->bind_param("issssisss", $zero, $location, $severity_text, $details, $timestamp, $alert_id, $autoritate, $form_status, $code);
+$formStmt = $conn->prepare("INSERT INTO forms (user_id, location, severity, details, created_at, alert_id, authority_id, status, code) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$formStmt->bind_param("issssisss", $user_id_numeric, $location, $severity_text, $details, $timestamp, $alert_id, $authority_id, $form_status, $code);
 $formStmt->execute();
+$formStmt->close();
 
-// Răspuns către aplicație
+// Confirmare JSON
 echo json_encode([
-  "success" => true,
-  "alert_id" => $alert_id,
-  "location" => $location,
-  "autoritate" => $autoritate,
-  "form_code" => $code
+    "success" => true,
+    "alert_id" => $alert_id,
+    "location" => $location,
+    "authority_id" => $authority_id,
+    "form_code" => $code
 ]);
 exit();

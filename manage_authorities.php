@@ -10,20 +10,35 @@ if ($_SESSION['role'] !== 'admin') {
 
 // La trimitere formular
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $authority_id = trim($_POST['authority_id']);
-  $name = trim($_POST['name']);
-  $type = trim($_POST['type']);
-  $region = trim($_POST['region']);
-  $contact = trim($_POST['contact_details']);
-  $person = trim($_POST['contact_person']);
-  $status = trim($_POST['status']);
+  $authority_id = trim($_POST['authority_id']);     // varchar(50), PK
+  $name = trim($_POST['name']);                     // varchar(255)
+  $type = trim($_POST['type']);                     // varchar(100)
+  $region = trim($_POST['region']);                 // varchar(100)
+  $contact = trim($_POST['contact_details']);       // varchar(100)
+  $person = trim($_POST['contact_person']);         // varchar(100)
+  $status = strtolower(trim($_POST['status']));     // varchar(50), lowercase
 
-  $stmt = $conn->prepare("INSERT INTO authorities (authority_id, name, type, region, contact_details, contact_person, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
+  // Validare minimă
+  if (!$authority_id || !$name || !$type || !$region || !in_array($status, ['activ', 'inactiv'])) {
+    die("Date obligatorii lipsă sau invalide.");
+  }
+
+  $stmt = $conn->prepare("INSERT INTO authorities 
+    (authority_id, name, type, region, contact_details, contact_person, status) 
+    VALUES (?, ?, ?, ?, ?, ?, ?)");
+  
+  if (!$stmt) {
+    die("Eroare pregătire interogare: " . $conn->error);
+  }
+
   $stmt->bind_param("sssssss", $authority_id, $name, $type, $region, $contact, $person, $status);
-  $stmt->execute();
 
-  header("Location: view_authorities.php");
-  exit();
+  if ($stmt->execute()) {
+    header("Location: view_authorities.php");
+    exit();
+  } else {
+    die("Eroare la inserare: " . $stmt->error);
+  }
 }
 ?>
 
@@ -50,8 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <label>Status:</label><br>
     <select name="status" style="width:100%; padding:8px; margin-bottom:20px;">
-      <option value="ACTIV">ACTIV</option>
-      <option value="INACTIV">INACTIV</option>
+      <option value="activ">ACTIV</option>
+      <option value="inactiv">INACTIV</option>
     </select><br>
 
     <input type="submit" value="Adaugă autoritatea" style="background-color:#5e4283; color:white; padding:10px 20px; border:none; border-radius:6px; font-weight:bold;">

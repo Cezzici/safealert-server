@@ -18,7 +18,7 @@ $form_id = (int)$_GET['id'];
 $conn->query("DELETE FROM interventions WHERE form_id = $form_id");
 
 // Apoi ștergem formularul
-$conn->query("DELETE FROM forms WHERE id = $form_id");
+$conn->query("DELETE FROM forms WHERE form_id = $form_id");
 
 header("Location: view_all_forms.php");
 exit();

@@ -15,7 +15,7 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 $intervention_id = (int)$_GET['id'];
 
 // Preluăm form_id pentru redirect
-$stmt = $conn->prepare("SELECT form_id FROM interventions WHERE id = ?");
+$stmt = $conn->prepare("SELECT form_id FROM interventions WHERE intervention_id = ?");
 $stmt->bind_param("i", $intervention_id);
 $stmt->execute();
 $res = $stmt->get_result();
@@ -25,7 +25,7 @@ if ($res->num_rows > 0) {
   $form_id = $form['form_id'];
 
   // 🔥 Ștergem efectiv intervenția
-  $delete = $conn->prepare("DELETE FROM interventions WHERE id = ?");
+  $delete = $conn->prepare("DELETE FROM interventions WHERE intervention_id = ?");
   $delete->bind_param("i", $intervention_id);
   $delete->execute();
 
