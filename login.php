@@ -4,99 +4,100 @@ if (isset($_SESSION['user_id'])) {
   header("Location: dashboard.php");
   exit();
 }
-
-$login_error = isset($_GET['error']) ? true : false;
 ?>
 
 <!DOCTYPE html>
 <html lang="ro">
 <head>
   <meta charset="UTF-8">
-  <title>SafeAlert - Autentificare</title>
-  <link rel="icon" href="LOGO SAFEALERT.png">
+  <title>Autentificare | SafeAlert</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
-      margin: 0;
+      background: linear-gradient(to bottom right, #f5f2ff, #e5ddfa);
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f2f0f7;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      margin: 0;
+      padding: 0;
       height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
-    .login-box {
+    .login-container {
       background-color: white;
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
       padding: 40px;
-      width: 100%;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
       max-width: 400px;
+      width: 90%;
       text-align: center;
     }
 
-    .login-box img {
-      height: 60px;
+    .login-container img {
+      width: 90px;
       margin-bottom: 20px;
     }
 
-    .login-box h2 {
-      margin-bottom: 25px;
+    h2 {
+      margin-bottom: 30px;
       color: #5e4283;
     }
 
-    .login-box input[type="text"],
-    .login-box input[type="password"] {
+    input[type="text"],
+    input[type="password"] {
       width: 100%;
       padding: 12px;
-      margin: 10px 0;
+      margin-bottom: 20px;
       border: 1px solid #ccc;
-      border-radius: 6px;
+      border-radius: 8px;
       font-size: 15px;
     }
 
-    .login-box input[type="submit"] {
+    button {
+      width: 100%;
       background-color: #5e4283;
       color: white;
-      border: none;
       padding: 12px;
-      width: 100%;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
       font-weight: bold;
-      font-size: 15px;
-      border-radius: 6px;
       cursor: pointer;
-      margin-top: 10px;
     }
 
-    .login-box input[type="submit"]:hover {
-      background-color: #4a3570;
-    }
-
-    .error-msg {
-      background-color: #ffe6e6;
-      color: #b30000;
-      border-left: 4px solid #b30000;
+    .error {
+      background-color: #ffe4e4;
+      color: #a00;
       padding: 10px;
-      margin-bottom: 15px;
-      border-radius: 6px;
-      font-size: 14px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+
+    @media (max-width: 500px) {
+      .login-container {
+        padding: 20px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="login-box">
-    <img src="LOGO SAFEALERT.png" alt="SafeAlert Logo" style="height: 110px; margin-bottom: 25px;">
-    <h2>Autentificare</h2>
 
-    <?php if ($login_error): ?>
-      <div class="error-msg">Date de autentificare incorecte. Încearcă din nou.</div>
-    <?php endif; ?>
+<div class="login-container">
+  <img src="LOGO SAFEALERT.png" alt="SafeAlert Logo">
 
-    <form method="post" action="login_check.php">
-      <input type="text" name="username" placeholder="Utilizator" required>
-      <input type="password" name="password" placeholder="Parolă" required>
-      <input type="submit" value="Conectează-te">
-    </form>
-  </div>
+  <h2>Autentificare SafeAlert</h2>
+
+  <?php if (isset($_GET['error'])): ?>
+    <div class="error"><?= htmlspecialchars($_GET['error']) ?></div>
+  <?php endif; ?>
+
+  <form method="post" action="login_check.php">
+    <input type="text" name="username" placeholder="Utilizator" required>
+    <input type="password" name="password" placeholder="Parolă" required>
+    <button type="submit">🔐 Conectează-te</button>
+  </form>
+</div>
+
 </body>
 </html>
