@@ -58,6 +58,12 @@ $result = $stmt->get_result();
           </tr>
         <?php endwhile; ?>
       </tbody>
+
+      <div style="text-align: right; margin-bottom: 20px;">
+      <a href="dashboard.php" style="background-color: #7b2ff2; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+      ⬅️ Înapoi la Dashboard
+      </a>
+      </div>
     </table>
   <?php else: ?>
     <p>Nu există alerte pentru această autoritate.</p>

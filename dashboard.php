@@ -164,6 +164,7 @@ if ($role === 'admin') {
   </div>
 <?php endif; ?>
 
+
 <div class="grid">
   <div class="card">
     <a href="view_alerts.php">🚨 Vizualizează alertele</a>
@@ -177,7 +178,25 @@ if ($role === 'admin') {
   <div class="card">
     <a href="view_authorities.php">🏛️ Autorități și ONG-uri</a>
   </div>
+</div> <!-- finalul div .grid -->
+
+<!-- FORMULAR RAPORT PDF INTERVENȚII -->
+<div style="background: white; padding: 24px 32px; border-radius: 16px; box-shadow: 0 6px 16px rgba(0,0,0,0.08); max-width: 600px; margin: 60px auto 0 auto; border-left: 6px solid #7b2ff2;">
+  <h3 style="margin-top: 0; font-size: 20px; color: #4e2977;">📁 Generează raport PDF intervenții</h3>
+  <form action="raport_interventii_pdf.php" method="get" target="_blank" style="margin-top: 16px;">
+    <label for="start" style="font-size: 14px; color: #333;">Data de început:</label>
+    <input type="date" id="start" name="start" required style="margin-bottom: 16px; padding: 10px; width: 100%; border: 1px solid #ccc; border-radius: 10px; font-size: 14px;">
+
+    <label for="end" style="font-size: 14px; color: #333;">Data de sfârșit:</label>
+    <input type="date" id="end" name="end" required style="margin-bottom: 20px; padding: 10px; width: 100%; border: 1px solid #ccc; border-radius: 10px; font-size: 14px;">
+
+    <button type="submit" style="background-color: #7b2ff2; color: white; font-weight: 600; padding: 10px 24px; font-size: 15px; border: none; border-radius: 10px; cursor: pointer;">
+      📄 Generează PDF
+    </button>
+  </form>
 </div>
+
+
 
 </body>
 </html>

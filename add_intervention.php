@@ -22,10 +22,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $responsible = trim($_POST['responsible_person']);
   $details = trim($_POST['details']);
   $status = trim($_POST['status']);
-  $timestamp = date('Y-m-d H:i:s');
 
-  $stmt = $conn->prepare("INSERT INTO interventions (form_id, intervention_type, responsible_person, details, status, timestamp) VALUES (?, ?, ?, ?, ?, ?)");
-  $stmt->bind_param("isssss", $form_id, $type, $responsible, $details, $status, $timestamp);
+  $stmt = $conn->prepare("
+    INSERT INTO interventions (form_id, intervention_type, responsible_person, details, status, created_at)
+    VALUES (?, ?, ?, ?, ?, NOW())
+  ");
+
+  if (!$stmt) {
+    die("Eroare la prepare(): " . $conn->error);
+  }
+
+  $stmt->bind_param("issss", $form_id, $type, $responsible, $details, $status);
   $stmt->execute();
 
   header("Location: intervention_view.php?form_id=$form_id");

@@ -62,6 +62,14 @@ $result = $stmt->get_result();
     <?php endwhile; ?>
   <?php else: ?>
     <p>Nu există intervenții asociate acestui formular.</p>
+    <?php if (isset($form_id)): ?>
+  <div style="margin-top: 30px; text-align: center;">
+    <a href="add_intervention.php?form_id=<?= urlencode($form_id) ?>" 
+       style="background-color: #7b2ff2; color: white; padding: 10px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+      ➕ Adaugă intervenție pentru acest formular
+    </a>
+  </div>
+<?php endif; ?>
   <?php endif; ?>
 </div>
 
