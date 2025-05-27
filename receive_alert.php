@@ -84,7 +84,7 @@ $stmt->close();
 
 // 🔥 INSERT corect în alerts (cu VARCHAR pentru authority_id!)
 $stmtAlert = $conn->prepare("INSERT INTO alerts (user_id, latitude, longitude, severity, created_at, status, location, authority_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-$stmtAlert->bind_param("sddissss", $uuid, $latitude, $longitude, $severity, $timestamp, $status, $location, $authority_id);
+$stmtAlert->bind_param("sddisssi", $uuid, $latitude, $longitude, $severity, $timestamp, $status, $location, $authority_id);
 $stmtAlert->execute();
 $alert_id = $stmtAlert->insert_id;
 $stmtAlert->close();

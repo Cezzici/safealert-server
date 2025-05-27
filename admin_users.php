@@ -29,7 +29,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta charset="UTF-8">
   <title>Administrare Utilizatori – SafeAlert</title>
   <style>
-    /* ... stilurile tale aici ... */
   </style>
 </head>
 <body>

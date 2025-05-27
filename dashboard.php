@@ -178,9 +178,9 @@ if ($role === 'admin') {
   <div class="card">
     <a href="view_authorities.php">🏛️ Autorități și ONG-uri</a>
   </div>
-</div> <!-- finalul div .grid -->
+</div> 
 
-<!-- FORMULAR RAPORT PDF INTERVENȚII -->
+
 <div style="background: white; padding: 24px 32px; border-radius: 16px; box-shadow: 0 6px 16px rgba(0,0,0,0.08); max-width: 600px; margin: 60px auto 0 auto; border-left: 6px solid #7b2ff2;">
   <h3 style="margin-top: 0; font-size: 20px; color: #4e2977;">📁 Generează raport PDF intervenții</h3>
   <form action="raport_interventii_pdf.php" method="get" target="_blank" style="margin-top: 16px;">

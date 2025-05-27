@@ -24,7 +24,6 @@ if ($res->num_rows > 0) {
   $form = $res->fetch_assoc();
   $form_id = $form['form_id'];
 
-  // 🔥 Ștergem efectiv intervenția
   $delete = $conn->prepare("DELETE FROM interventions WHERE intervention_id = ?");
   $delete->bind_param("i", $intervention_id);
   $delete->execute();
