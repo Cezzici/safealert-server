@@ -1,49 +1,60 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id'])) {
-  header("Location: login.php");
-  exit();
-}
-
 require_once 'db.php';
+include 'header.php'; 
+
+
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
 
 $username = $_SESSION['username'];
 $role = $_SESSION['role'];
 $authority_id = $_SESSION['authority_id'] ?? null;
 
-// Redirect pentru authority/ngo
+// Redirecționare pe dashboard dedicat
 if ($role === 'authority') {
-  header("Location: view_alerts.php");
-  exit();
+    header("Location: view_alerts.php");
+    exit();
 }
+
 if ($role === 'ngo') {
-  header("Location: view_forms.php");
-  exit();
+    header("Location: view_interventions.php");
+    exit();
 }
 
 // Statistici doar pentru admin
 if ($role === 'admin') {
-  $stats = [];
+    $stats = [];
 
-  $stats['total_alerts'] = $conn->query("SELECT COUNT(*) FROM alerts")->fetch_row()[0];
-  $stats['total_forms'] = $conn->query("SELECT COUNT(*) FROM forms")->fetch_row()[0];
-  $stats['total_interventions'] = $conn->query("SELECT COUNT(*) FROM interventions")->fetch_row()[0];
+    $stats['total_alerts'] = $conn->query("SELECT COUNT(*) FROM alerts")->fetch_row()[0];
+    $stats['total_forms'] = $conn->query("SELECT COUNT(*) FROM forms")->fetch_row()[0];
+    $stats['total_interventions'] = $conn->query("SELECT COUNT(*) FROM interventions")->fetch_row()[0];
 
-  $stats['interventions_finalized'] = $conn->query("SELECT COUNT(*) FROM interventions WHERE status = 'finalizată'")->fetch_row()[0];
-  $stats['interventions_open'] = $conn->query("SELECT COUNT(*) FROM interventions WHERE status = 'în desfășurare'")->fetch_row()[0];
+    $result = $conn->query("SELECT COUNT(*) FROM interventions WHERE status = 'finalizată'");
+    $stats['interventions_finalized'] = $result ? $result->fetch_row()[0] : 0;
 
-  $stats['authorities'] = $conn->query("SELECT COUNT(*) FROM users WHERE role = 'authority'")->fetch_row()[0];
-  $stats['ngos'] = $conn->query("SELECT COUNT(*) FROM users WHERE role = 'ngo'")->fetch_row()[0];
+    $result = $conn->query("SELECT COUNT(*) FROM interventions WHERE status = 'în desfășurare'");
+    $stats['interventions_open'] = $result ? $result->fetch_row()[0] : 0;
+
+    $stats['total_authorities'] = $conn->query("SELECT COUNT(*) FROM authorities")->fetch_row()[0];
+
+    $stats['total_ongs'] = $conn->query("SELECT COUNT(*) FROM authorities WHERE type = 'ONG'")->fetch_row()[0];
+
+    $stats['active_authorities'] = $conn->query("SELECT COUNT(*) FROM users WHERE role = 'authority'")->fetch_row()[0];
+    $stats['active_ongs'] = $conn->query("SELECT COUNT(*) FROM users WHERE role = 'ngo'")->fetch_row()[0];
+    $pendingUsersCount = $conn->query("SELECT COUNT(*) FROM pending_users")->fetch_row()[0];
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="ro">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Dashboard SafeAlert</title>
-  <link rel="icon" type="image/png" href="LOGO SAFEALERT.PNG">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="LOGO SAFEALERT.PNG" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       background: linear-gradient(135deg, #f5f2ff, #e5ddfa);
@@ -124,6 +135,21 @@ if ($role === 'admin') {
       font-size: 1.4em;
       margin: 0;
     }
+
+    .mark-read-btn {
+      display: inline-block;
+      margin-top: 10px;
+      background: #ffb400;
+      color: #4e2977;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .mark-read-btn:hover {
+      background: #d69700;
+    }
   </style>
 </head>
 <body>
@@ -134,7 +160,6 @@ if ($role === 'admin') {
 </div>
 
 <h1>📊 Panou de control SafeAlert</h1>
-
 
 <?php if ($role === 'admin'): ?>
   <div class="stats">
@@ -155,48 +180,52 @@ if ($role === 'admin') {
       </p>
     </div>
     <div class="stat-box">
-      <h3>🏛️ Utilizatori</h3>
-      <p style="font-size: 1.2em;">
-        Autorități: <strong><?= $stats['authorities'] ?></strong><br>
-        ONG-uri: <strong><?= $stats['ngos'] ?></strong>
-      </p>
+      <h3>🏛️ Autorități și ONG-uri</h3>
+      <p>Autorități înregistrate: <strong><?= $stats['total_authorities'] ?></strong></p>
+      <p>Conturi autorități: <strong><?= $stats['active_authorities'] ?></strong></p>
+      <p>ONG-uri înregistrate: <strong><?= $stats['total_ongs'] ?></strong></p>
+      <p>Conturi ONG: <strong><?= $stats['active_ongs'] ?></strong></p>
     </div>
   </div>
 <?php endif; ?>
 
-
 <div class="grid">
-  <div class="card">
-    <a href="view_alerts.php">🚨 Vizualizează alertele</a>
-  </div>
-  <div class="card">
-    <a href="view_forms.php">📄 Vizualizează formularele</a>
-  </div>
+  <?php if ($role === 'admin' || $role === 'authority'): ?>
+    <div class="card">
+      <a href="view_alerts.php">🚨 Vizualizează alertele</a>
+    </div>
+    <div class="card">
+      <a href="view_forms.php">📄 Vizualizează formularele</a>
+    </div>
+  <?php endif; ?>
+
   <div class="card">
     <a href="view_interventions.php">🛠️ Vizualizează intervențiile</a>
   </div>
-  <div class="card">
-    <a href="view_authorities.php">🏛️ Autorități și ONG-uri</a>
-  </div>
-</div> 
 
-
-<div style="background: white; padding: 24px 32px; border-radius: 16px; box-shadow: 0 6px 16px rgba(0,0,0,0.08); max-width: 600px; margin: 60px auto 0 auto; border-left: 6px solid #7b2ff2;">
-  <h3 style="margin-top: 0; font-size: 20px; color: #4e2977;">📁 Generează raport PDF intervenții</h3>
-  <form action="raport_interventii_pdf.php" method="get" target="_blank" style="margin-top: 16px;">
-    <label for="start" style="font-size: 14px; color: #333;">Data de început:</label>
-    <input type="date" id="start" name="start" required style="margin-bottom: 16px; padding: 10px; width: 100%; border: 1px solid #ccc; border-radius: 10px; font-size: 14px;">
-
-    <label for="end" style="font-size: 14px; color: #333;">Data de sfârșit:</label>
-    <input type="date" id="end" name="end" required style="margin-bottom: 20px; padding: 10px; width: 100%; border: 1px solid #ccc; border-radius: 10px; font-size: 14px;">
-
-    <button type="submit" style="background-color: #7b2ff2; color: white; font-weight: 600; padding: 10px 24px; font-size: 15px; border: none; border-radius: 10px; cursor: pointer;">
-      📄 Generează PDF
-    </button>
-  </form>
+  <?php if ($role === 'admin'): ?>
+    <div class="card">
+      <a href="view_authorities.php">🏛️ Autorități și ONG-uri</a>
+    </div>
+  <?php endif; ?>
 </div>
 
+<?php if ($role === 'admin'): ?>
+  <div style="background: white; padding: 24px 32px; border-radius: 16px; box-shadow: 0 6px 16px rgba(0,0,0,0.08); max-width: 600px; margin: 60px auto 0 auto; border-left: 6px solid #7b2ff2;">
+    <h3 style="margin-top: 0; font-size: 20px; color: #4e2977;">📁 Generează raport PDF intervenții</h3>
+    <form action="raport_interventii_pdf.php" method="get" target="_blank" style="margin-top: 16px;">
+      <label for="start" style="font-size: 14px; color: #333;">Data de început:</label>
+      <input type="date" id="start" name="start" required style="margin-bottom: 16px; padding: 10px; width: 100%; border: 1px solid #ccc; border-radius: 10px; font-size: 14px;">
 
+      <label for="end" style="font-size: 14px; color: #333;">Data de sfârșit:</label>
+      <input type="date" id="end" name="end" required style="margin-bottom: 20px; padding: 10px; width: 100%; border: 1px solid #ccc; border-radius: 10px; font-size: 14px;">
 
+      <button type="submit" style="background-color: #7b2ff2; color: white; font-weight: 600; padding: 10px 24px; font-size: 15px; border: none; border-radius: 10px; cursor: pointer;">
+        📄 Generează PDF
+      </button>
+    </form>
+  </div>
+<?php endif; ?>
+<?php include 'footer.php'; ?>
 </body>
 </html>

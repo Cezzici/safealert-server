@@ -1,5 +1,6 @@
 <?php
 include 'db.php';
+include 'header.php';
 
 function detectRegion($lat, $long) {
     if ($lat >= 44.3 && $lat <= 44.6 && $long >= 25.9 && $long <= 26.3) {

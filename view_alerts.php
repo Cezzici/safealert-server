@@ -1,5 +1,5 @@
 <?php
-require_once 'header.php';
+include 'header.php';
 require_once 'db.php';
 
 $role = $_SESSION['role'] ?? '';

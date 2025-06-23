@@ -5,6 +5,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
   exit();
 }
 require_once 'db.php';
+include 'header.php';
 
 // Adăugare utilizator nou
 $mesaj = '';

@@ -1,80 +1,143 @@
 <?php
-require_once 'header.php';
-require_once 'db.php';
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+require 'db.php';
+include 'header.php';
 
-if ($_SESSION['role'] !== 'admin') {
-  echo '<div class="card"><p>Acces interzis.</p></div>';
-  include 'footer.php';
-  exit();
+// Verificăm dacă utilizatorul este logat și este admin
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
+    header("Location: login.php");
+    exit();
 }
 
-// La trimitere formular
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $authority_id = trim($_POST['authority_id']);     // varchar(50), PK
-  $name = trim($_POST['name']);                     // varchar(255)
-  $type = trim($_POST['type']);                     // varchar(100)
-  $region = trim($_POST['region']);                 // varchar(100)
-  $contact = trim($_POST['contact_details']);       // varchar(100)
-  $person = trim($_POST['contact_person']);         // varchar(100)
-  $status = strtolower(trim($_POST['status']));     // varchar(50), lowercase
+// Adăugare autoritate
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
+    // Caut cel mai mare ID existent
+$result = $conn->query("SELECT authority_id FROM authorities ORDER BY authority_id DESC LIMIT 1");
 
-  // Validare minimă
-  if (!$authority_id || !$name || !$type || !$region || !in_array($status, ['activ', 'inactiv'])) {
-    die("Date obligatorii lipsă sau invalide.");
-  }
+if ($result && $result->num_rows > 0) {
+    $row = $result->fetch_assoc();
+    $last_id = $row['authority_id'];
 
-  $stmt = $conn->prepare("INSERT INTO authorities 
-    (authority_id, name, type, region, contact_details, contact_person, status) 
-    VALUES (?, ?, ?, ?, ?, ?, ?)");
-  
-  if (!$stmt) {
-    die("Eroare pregătire interogare: " . $conn->error);
-  }
+    // Extragem numărul final
+    $last_number = intval(substr($last_id, -3));
+    $new_number = str_pad($last_number + 1, 3, '0', STR_PAD_LEFT);
+} else {
+    // Dacă nu există nicio autoritate, începem de la 001
+    $new_number = '001';
+}
 
-  $stmt->bind_param("sssssss", $authority_id, $name, $type, $region, $contact, $person, $status);
+$authority_id = 'AUT-' . date('Ymd') . '-' . $new_number;
 
-  if ($stmt->execute()) {
-    header("Location: view_authorities.php");
-    exit();
-  } else {
-    die("Eroare la inserare: " . $stmt->error);
-  }
+    $name = $_POST['name'];
+    $type = $_POST['type'];
+    $region = $_POST['region'];
+    $contact_person = $_POST['contact_person'];
+    $contact_details = $_POST['contact_details'];
+    $status = $_POST['status'];
+
+    $stmt = $conn->prepare("INSERT INTO authorities (authority_id, name, type, region, contact_person, contact_details, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssssss", $authority_id, $name, $type, $region, $contact_person, $contact_details, $status);
+
+    if ($stmt->execute()) {
+        header("Location: view_authorities.php?msg=added");
+        exit();
+    } else {
+        $error = "Eroare la adăugarea autorității.";
+    }
 }
 ?>
 
-<div class="card">
-  <h2>➕ Adaugă autoritate nouă</h2>
-  <form method="post">
-    <label>ID autoritate (ex. AUT-20250520-001):</label><br>
-    <input type="text" name="authority_id" required style="width:100%; padding:8px; margin-bottom:10px;"><br>
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <title>Adaugă Autoritate</title>
+    <style>
+        .form-container {
+            max-width: 500px;
+            margin: 40px auto;
+            background-color: #fdfdff;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #5e4283;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .form-container h2 {
+            margin-bottom: 20px;
+            color: #5e4283;
+        }
+        .form-container label {
+            font-weight: bold;
+        }
+        .form-container input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .form-container button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .form-container button:hover {
+            background-color: #45a049;
+        }
+        .form-container a {
+            display: inline-block;
+            margin-top: 20px;
+            color: #5e4283;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <?php include 'header.php'; ?>
 
-    <label>Nume autoritate:</label><br>
-    <input type="text" name="name" required style="width:100%; padding:8px; margin-bottom:10px;"><br>
+    <div class="form-container">
+        <h2>➕ Adaugă Autoritate</h2>
 
-    <label>Tip:</label><br>
-    <input type="text" name="type" required style="width:100%; padding:8px; margin-bottom:10px;"><br>
+        <?php if (isset($error)) echo "<p style='color: red; font-weight: bold;'>$error</p>"; ?>
 
-    <label>Regiune:</label><br>
-    <input type="text" name="region" required style="width:100%; padding:8px; margin-bottom:10px;"><br>
+        <form method="POST" action="manage_authorities.php">
+            <label>Nume:</label>
+            <input type="text" name="name" required>
 
-    <label>Detalii contact (email, telefon):</label><br>
-    <input type="text" name="contact_details" style="width:100%; padding:8px; margin-bottom:10px;"><br>
+            <label>Tip:</label>
+            <input type="text" name="type" required>
 
-    <label>Persoană de contact:</label><br>
-    <input type="text" name="contact_person" style="width:100%; padding:8px; margin-bottom:10px;"><br>
+            <label>Regiune:</label>
+            <input type="text" name="region" required>
 
-    <label>Status:</label><br>
-    <select name="status" style="width:100%; padding:8px; margin-bottom:20px;">
-      <option value="activ">ACTIV</option>
-      <option value="inactiv">INACTIV</option>
-    </select><br>
+            <label>Persoană contact:</label>
+            <input type="text" name="contact_person" required>
 
-    <input type="submit" value="Adaugă autoritatea" style="background-color:#5e4283; color:white; padding:10px 20px; border:none; border-radius:6px; font-weight:bold;">
-  </form>
+            <label>Date contact:</label>
+            <input type="text" name="contact_details" required>
 
-  <div style="margin-top: 20px;">
-    <a href="view_authorities.php" style="text-decoration:none;">⬅️ Înapoi la lista autorităților</a>
-  </div>
-</div>
+            <label>Status:</label>
+            <label>Status:</label>
+                <select name="status" required>
+                    <option value="ACTIV" selected>ACTIV</option>
+                    <option value="INACTIV">INACTIV</option>
+                    <option value="SUSPENDAT">SUSPENDAT</option>
+                </select>
+            <button type="submit">Adaugă Autoritate</button>
+        </form>
+
+        <a href="view_authorities.php">⬅️ Înapoi la lista autorităților</a>
+    </div>
 
 <?php include 'footer.php'; ?>
+
+</body>
+</html>

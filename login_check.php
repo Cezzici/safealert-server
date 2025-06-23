@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'db.php';
+include 'header.php';
 
 $username = $_POST['username'] ?? '';
 $password = $_POST['password'] ?? '';

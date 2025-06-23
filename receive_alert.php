@@ -56,7 +56,7 @@ foreach ($mapping as $region => $coords) {
     }
 }
 
-// Căutăm/creăm utilizatorul
+
 $user_id_numeric = null;
 $stmt = $conn->prepare("SELECT user_id, name FROM app_users WHERE uuid = ?");
 $stmt->bind_param("s", $uuid);
@@ -82,14 +82,13 @@ if ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
-// 🔥 INSERT corect în alerts (cu VARCHAR pentru authority_id!)
 $stmtAlert = $conn->prepare("INSERT INTO alerts (user_id, latitude, longitude, severity, created_at, status, location, authority_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-$stmtAlert->bind_param("sddisssi", $uuid, $latitude, $longitude, $severity, $timestamp, $status, $location, $authority_id);
+$stmtAlert->bind_param("sddissss", $uuid, $latitude, $longitude, $severity, $timestamp, $status, $location, $authority_id);
 $stmtAlert->execute();
 $alert_id = $stmtAlert->insert_id;
 $stmtAlert->close();
 
-// Formular legat de alertă
+
 $code = 'SAF-' . date('Ymd') . '-' . rand(100, 999);
 $severity_text = "Nivel $severity";
 $form_status = 'new';
@@ -100,7 +99,7 @@ $formStmt->bind_param("issssisss", $user_id_numeric, $location, $severity_text, 
 $formStmt->execute();
 $formStmt->close();
 
-// Confirmare JSON
+
 echo json_encode([
     "success" => true,
     "alert_id" => $alert_id,

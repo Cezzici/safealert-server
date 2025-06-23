@@ -1,6 +1,34 @@
 <?php
-require_once 'header.php';
+include 'header.php';
 require_once 'db.php';
+
+// Procesăm ștergerea
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_authority_id']) && !isset($_SESSION['deletion_in_progress'])) {
+    $_SESSION['deletion_in_progress'] = true; // Blochez ștergeri multiple
+
+    $delete_id = $_POST['delete_authority_id']; // Fără intval, ID-ul e string
+
+    $check = $conn->prepare("SELECT * FROM authorities WHERE authority_id = ?");
+    $check->bind_param("s", $delete_id); // "s" pentru string
+    $check->execute();
+    $result_check = $check->get_result();
+
+    if ($result_check && $result_check->num_rows > 0) {
+        $delete = $conn->prepare("DELETE FROM authorities WHERE authority_id = ?");
+        $delete->bind_param("s", $delete_id); // "s" pentru string
+        if ($delete->execute()) {
+            header("Location: view_authorities.php?msg=deleted");
+            unset($_SESSION['deletion_in_progress']); // Deblochez sesiunea
+            exit();
+        } else {
+            $error = "Eroare la ștergerea autorității.";
+        }
+    } else {
+        $error = "Autoritatea nu există.";
+    }
+
+    unset($_SESSION['deletion_in_progress']); // Siguranță extra
+}
 
 // Grupăm câte formulare are fiecare autoritate pe baza authority_id
 $form_counts = [];
@@ -33,6 +61,16 @@ $result = $conn->query("SELECT * FROM authorities ORDER BY region ASC, name ASC"
     <?php endif; ?>
   </div>
 
+  <?php
+  if (isset($_GET['msg']) && $_GET['msg'] === 'deleted') {
+      echo "<p style='color: green; font-weight: bold;'>Autoritatea a fost ștearsă cu succes!</p>";
+  }
+
+  if (isset($error)) {
+      echo "<p style='color: red; font-weight: bold;'>$error</p>";
+  }
+  ?>
+
   <?php if ($result && $result->num_rows > 0): ?>
     <?php while ($auth = $result->fetch_assoc()): ?>
       <div style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #5e4283; background-color: #fdfdff; border-radius: 8px;">
@@ -46,6 +84,16 @@ $result = $conn->query("SELECT * FROM authorities ORDER BY region ASC, name ASC"
         <p><strong>Cazuri alocate:</strong>
           <?= isset($form_counts[$auth['authority_id']]) ? $form_counts[$auth['authority_id']] : 0 ?>
         </p>
+
+        <?php if ($_SESSION['role'] === 'admin'): ?>
+          <form method="POST" action="view_authorities.php" onsubmit="return confirm('Ești sigur că vrei să ștergi această autoritate?');" style="margin-top: 10px;">
+              <input type="hidden" name="delete_authority_id" value="<?= $auth['authority_id'] ?>">
+              <button type="submit" style="background-color: red; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer;" onclick="this.disabled=true; this.form.submit();">
+                  🗑️ Șterge autoritate
+              </button>
+          </form>
+        <?php endif; ?>
+
       </div>
     <?php endwhile; ?>
   <?php else: ?>

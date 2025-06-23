@@ -1,5 +1,5 @@
 <?php
-require_once 'header.php';
+include 'header.php';
 require_once 'db.php';
 
 $form_id = $_GET['form_id'] ?? null;
@@ -29,6 +29,35 @@ if ($result->num_rows === 0) {
 }
 
 $form = $result->fetch_assoc();
+
+// Verificare acces pe roluri
+$role = $_SESSION['role'];
+$authority_id = $_SESSION['authority_id'] ?? null;
+$username = $_SESSION['username'];
+$access_granted = false;
+
+if ($role === 'admin') {
+    $access_granted = true;
+} elseif ($role === 'authority' && $form['authority_id'] === $authority_id) {
+    $access_granted = true;
+} elseif ($role === 'ngo') {
+    $checkSql = "SELECT * FROM interventions WHERE form_id = ? AND responsible_person = ?";
+    $checkStmt = $conn->prepare($checkSql);
+    $checkStmt->bind_param("is", $form['form_id'], $username);
+    $checkStmt->execute();
+    $checkResult = $checkStmt->get_result();
+    if ($checkResult->num_rows > 0) {
+        $access_granted = true;
+    }
+    $checkStmt->close();
+}
+
+if (!$access_granted) {
+    echo "<p style='color: red; font-weight: bold;'>⚠️ Nu aveți acces la acest formular.</p>";
+    echo "<a href='dashboard.php' style='display: inline-block; margin-top: 10px; background-color: #7b2ff2; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: bold;'>⬅️ Înapoi la Dashboard</a>";
+    include 'footer.php';
+    exit();
+}
 
 // Preluăm numele utilizatorului
 $user_id = $form['user_id'];
@@ -122,4 +151,3 @@ $interventionStmt->close();
 </div>
 
 <?php include 'footer.php'; ?>
-

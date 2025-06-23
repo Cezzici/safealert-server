@@ -1,5 +1,5 @@
 <?php
-require_once 'header.php';
+include 'header.php';
 require_once 'db.php';
 
 if (!in_array($_SESSION['role'], ['admin', 'authority'])) {
