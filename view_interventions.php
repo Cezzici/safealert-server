@@ -6,6 +6,8 @@ $role = $_SESSION['role'];
 $authority_id = $_SESSION['authority_id'] ?? null;
 $username = $_SESSION['username'];
 
+$stmt = null;
+
 // Select personalizat pe roluri
 if ($role === 'admin') {
     $sql = "
@@ -14,29 +16,35 @@ if ($role === 'admin') {
         LEFT JOIN forms f ON i.form_id = f.form_id 
         ORDER BY i.created_at DESC
     ";
+    $stmt = $conn->prepare($sql);
 } elseif ($role === 'authority') {
     $sql = "
         SELECT i.*, f.code AS form_code 
         FROM interventions i 
         LEFT JOIN forms f ON i.form_id = f.form_id 
-        WHERE f.authority_id = '$authority_id'
+        WHERE f.authority_id = ?
         ORDER BY i.created_at DESC
     ";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $authority_id);
 } elseif ($role === 'ngo') {
     $sql = "
         SELECT i.*, f.code AS form_code 
         FROM interventions i 
         LEFT JOIN forms f ON i.form_id = f.form_id 
-        WHERE i.responsible_person = '$username'
+        WHERE i.responsible_person = ?
         ORDER BY i.created_at DESC
     ";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $username);
 } else {
     // Rol necunoscut – protecție
     header('Location: dashboard.php');
     exit();
 }
 
-$result = $conn->query($sql);
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 
 <div class="card">
@@ -68,15 +76,16 @@ $result = $conn->query($sql);
           </tr>
         <?php endwhile; ?>
       </tbody>
-      <div style="text-align: right; margin-bottom: 20px;">
-        <a href="dashboard.php" style="background-color: #7b2ff2; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: bold;">
-          ⬅️ Înapoi la Dashboard
-        </a>
-      </div>
     </table>
   <?php else: ?>
     <p>Nu există intervenții înregistrate.</p>
   <?php endif; ?>
+
+  <div style="text-align: right; margin-top: 20px;">
+    <a href="dashboard.php" style="background-color: #7b2ff2; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+      ⬅️ Înapoi la Dashboard
+    </a>
+  </div>
 </div>
 
 <?php include 'footer.php'; ?>

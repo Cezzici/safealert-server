@@ -14,10 +14,11 @@ $sql = "
 
 // Filtru doar pentru authority/ngo
 if ($role === 'authority' || $role === 'ngo') {
-    $sql .= " WHERE a.authority_id = ?";
+    $sql .= " WHERE a.authority_id = ? ORDER BY a.created_at DESC";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $authority_id);
 } else {
+    $sql .= " ORDER BY a.created_at DESC";
     $stmt = $conn->prepare($sql);
 }
 
@@ -44,12 +45,24 @@ $result = $stmt->get_result();
       <tbody>
         <?php while ($row = $result->fetch_assoc()): ?>
           <tr style="border-bottom: 1px solid #ccc;">
-            <td style="padding: 10px;"><?= htmlspecialchars($row['user_name'] ?? 'Necunoscut') ?></td>
-            <td style="padding: 10px; color: <?= $row['severity'] >= 4 ? 'red' : '#333' ?>;"><strong><?= htmlspecialchars($row['severity']) ?></strong></td>
-            <td style="padding: 10px;"><?= htmlspecialchars($row['location']) ?></td>
-            <td style="padding: 10px;"><?= htmlspecialchars($row['authority_name'] ?? 'N/A') ?></td>
-            <td style="padding: 10px;"><?= htmlspecialchars($row['created_at']) ?></td>
-            <td style="padding: 10px;"><?= htmlspecialchars($row['status']) ?></td>
+            <td style="padding: 10px;">
+              <?= htmlspecialchars($row['user_name'] ?? 'Necunoscut') ?>
+            </td>
+            <td style="padding: 10px; color: <?= $row['severity'] >= 4 ? 'red' : '#333' ?>;">
+              <strong><?= htmlspecialchars($row['severity']) ?></strong>
+            </td>
+            <td style="padding: 10px;">
+              <?= htmlspecialchars($row['location']) ?>
+            </td>
+            <td style="padding: 10px;">
+              <?= htmlspecialchars($row['authority_name'] ?? 'N/A') ?>
+            </td>
+            <td style="padding: 10px;">
+              <?= htmlspecialchars($row['created_at']) ?>
+            </td>
+            <td style="padding: 10px;">
+              <?= htmlspecialchars($row['status']) ?>
+            </td>
             <td style="padding: 10px;">
               <a href="form_view.php?alert_id=<?= $row['alert_id'] ?>" style="color: #5e4283;">🔍 Formular</a>
               |
@@ -58,16 +71,16 @@ $result = $stmt->get_result();
           </tr>
         <?php endwhile; ?>
       </tbody>
-
-      <div style="text-align: right; margin-bottom: 20px;">
-      <a href="dashboard.php" style="background-color: #7b2ff2; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: bold;">
-      ⬅️ Înapoi la Dashboard
-      </a>
-      </div>
     </table>
   <?php else: ?>
     <p>Nu există alerte pentru această autoritate.</p>
   <?php endif; ?>
+
+  <div style="text-align: right; margin-top: 20px;">
+    <a href="dashboard.php" style="background-color: #7b2ff2; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+      ⬅️ Înapoi la Dashboard
+    </a>
+  </div>
 </div>
 
 <?php include 'footer.php'; ?>
