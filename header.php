@@ -42,7 +42,7 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            position: fixed; /* Navbar lipit sus */
+            position: fixed; 
             top: 0;
             left: 0;
             width: 100%;
@@ -92,7 +92,7 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             margin: 20px auto;
-            margin-top: 100px; /* spațiu cât header-ul fix */
+            margin-top: 100px; 
         }
 
         table {

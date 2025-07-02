@@ -13,6 +13,5 @@ if ($conn->connect_error) {
     die("Conexiunea a eșuat: " . $conn->connect_error);
 }
 
-// Setare charset pentru caractere speciale
 $conn->set_charset("utf8mb4");
 ?>

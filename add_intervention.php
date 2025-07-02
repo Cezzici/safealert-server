@@ -16,7 +16,6 @@ if ($form_id <= 0) {
   exit();
 }
 
-// Dacă se trimite formularul POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $type = trim($_POST['intervention_type']);
   $responsible = trim($_POST['responsible_person']);

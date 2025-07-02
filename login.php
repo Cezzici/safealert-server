@@ -85,7 +85,7 @@ if (isset($_SESSION['user_id'])) {
       margin-top: 10px;
     }
 
-    /* Modal / popup */
+  
     #signupModal {
       display: none;
       position: fixed;

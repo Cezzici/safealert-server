@@ -15,7 +15,6 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 
 $intervention_id = (int)$_GET['id'];
 
-// Preluăm form_id pentru redirect
 $stmt = $conn->prepare("SELECT form_id FROM interventions WHERE intervention_id = ?");
 $stmt->bind_param("i", $intervention_id);
 $stmt->execute();

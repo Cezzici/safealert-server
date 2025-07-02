@@ -1,7 +1,7 @@
 <?php
-ob_clean(); // Curăță bufferul
+ob_clean();
 require('fpdf.php');
-require_once 'db.php'; // Asta îți aduce conexiunea $conn
+require_once 'db.php'; 
 
 function faraDiacritice($string) {
   $map = [

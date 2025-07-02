@@ -4,9 +4,9 @@ require_once 'db.php';
 
 // Procesăm ștergerea
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_authority_id']) && !isset($_SESSION['deletion_in_progress'])) {
-    $_SESSION['deletion_in_progress'] = true; // Blochez ștergeri multiple
+    $_SESSION['deletion_in_progress'] = true; 
 
-    $delete_id = $_POST['delete_authority_id']; // Fără intval, ID-ul e string
+    $delete_id = $_POST['delete_authority_id'];
 
     $check = $conn->prepare("SELECT * FROM authorities WHERE authority_id = ?");
     $check->bind_param("s", $delete_id); // "s" pentru string

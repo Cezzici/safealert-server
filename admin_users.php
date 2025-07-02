@@ -79,7 +79,6 @@ $role = $_SESSION['role'];
   <table>
     <tr><th>ID</th><th>Username</th><th>Rol</th></tr>
     <?php
-    // Modificare: coloana ID este system_user_id
     $result = $conn->query("SELECT system_user_id, username, role FROM users ORDER BY system_user_id ASC");
     while ($row = $result->fetch_assoc()) {
       echo "<tr><td>" . htmlspecialchars($row['system_user_id']) . "</td><td>" . htmlspecialchars($row['username']) . "</td><td>" . htmlspecialchars($row['role']) . "</td></tr>";
