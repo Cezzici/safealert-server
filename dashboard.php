@@ -154,11 +154,6 @@ if ($role === 'admin') {
 </head>
 <body>
 
-<div class="logout">
-  Autentificat ca: <?= htmlspecialchars($username) ?> (<?= htmlspecialchars($role) ?>) |
-  <a href="logout.php">Logout</a>
-</div>
-
 <h1>📊 Panou de control SafeAlert</h1>
 
 <?php if ($role === 'admin'): ?>

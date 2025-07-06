@@ -101,7 +101,6 @@ $authority_id = 'AUT-' . date('Ymd') . '-' . $new_number;
     </style>
 </head>
 <body>
-    <?php include 'header.php'; ?>
 
     <div class="form-container">
         <h2>➕ Adaugă Autoritate</h2>

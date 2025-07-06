@@ -1,40 +1,73 @@
 <?php
-include 'header.php';
+require_once 'header.php';
 require_once 'db.php';
 
-// Preluăm formularele ordonate descrescător după created_at
-$result = $conn->query("SELECT * FROM forms ORDER BY created_at DESC");
+if ($_SESSION['role'] != 'admin' && $_SESSION['role'] != 'authority') {
+    header('Location: dashboard.php');
+    exit();
+}
+
+$role = $_SESSION['role'];
+$authority_id = $_SESSION['authority_id'];
+
+if ($role === 'admin') {
+    $result = $conn->query("
+        SELECT f.*, a.name AS authority_name, u.name AS user_name
+        FROM forms f
+        LEFT JOIN app_users u ON f.user_id = u.user_id
+        LEFT JOIN authorities a ON f.authority_id = a.authority_id
+        ORDER BY f.created_at DESC
+    ");
+} else {
+    $stmt = $conn->prepare("
+        SELECT f.*, a.name AS authority_name, u.name AS user_name
+        FROM forms f
+        LEFT JOIN app_users u ON f.user_id = u.user_id
+        LEFT JOIN authorities a ON f.authority_id = a.authority_id
+        WHERE f.authority_id = ?
+        ORDER BY f.created_at DESC
+    ");
+    $stmt->bind_param("s", $authority_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+}
 ?>
 
 <div class="card">
-  <h2>🗂️ Formulare înregistrate</h2>
-
-  <div style="margin-bottom: 20px;">
-    <a href="dashboard.php" style="background-color: #5e4283; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 500;">
-      ⬅️ Înapoi la Dashboard
-    </a>
-  </div>
+  <h2>📄 Formulare înregistrate</h2>
 
   <?php if ($result && $result->num_rows > 0): ?>
-    <?php while ($form = $result->fetch_assoc()): ?>
-      <div style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #5e4283; background-color: #fdfdff; border-radius: 8px;">
-        <p><strong>ID formular:</strong> <?= htmlspecialchars($form['form_id']) ?></p>
-        <p><strong>Cod intern:</strong> <?= htmlspecialchars($form['code']) ?></p>
-        <p><strong>Alertă asociată:</strong> <?= htmlspecialchars($form['alert_id'] ?? '-') ?></p>
-        <p><strong>Locație:</strong> <?= htmlspecialchars($form['location']) ?></p>
-        <p><strong>Gravitate:</strong> <?= htmlspecialchars($form['severity']) ?></p>
-        <p><strong>Status:</strong> <?= htmlspecialchars($form['status'] ?? '-') ?></p>
-        <p><strong>Data completării:</strong> <?= htmlspecialchars($form['created_at']) ?></p>
-
-        <div style="margin-top: 10px;">
-          <a href="form_view.php?form_id=<?= $form['form_id'] ?>" style="margin-right: 15px;">🔍 Vezi formular</a>
-          <a href="intervention_view.php?form_id=<?= $form['form_id'] ?>" style="margin-right: 15px;">🚑 Vezi intervenții</a>
-          <a href="delete_form.php?form_id=<?= $form['form_id'] ?>"
-             onclick="return confirm('Ești sigur că vrei să ștergi acest formular?');"
-             style="color: red;">🗑️ Șterge formular</a>
-        </div>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+      <thead>
+        <tr style="background-color: #5e4283; color: white;">
+          <th style="padding: 10px;">Cod</th>
+          <th style="padding: 10px;">Utilizator</th>
+          <th style="padding: 10px;">Locație</th>
+          <th style="padding: 10px;">Stare</th>
+          <th style="padding: 10px;">Dată</th>
+          <th style="padding: 10px;">Acțiune</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php while ($row = $result->fetch_assoc()): ?>
+          <tr style="border-bottom: 1px solid #ccc;">
+            <td style="padding: 10px;"><?= htmlspecialchars($row['code']) ?></td>
+            <td style="padding: 10px;"><?= htmlspecialchars($row['user_name'] ?? 'Necunoscut') ?></td>
+            <td style="padding: 10px;"><?= htmlspecialchars($row['location']) ?></td>
+            <td style="padding: 10px;"><?= htmlspecialchars($row['status']) ?></td>
+            <td style="padding: 10px;"><?= htmlspecialchars($row['created_at']) ?></td>
+            <td style="padding: 10px;">
+              <a href="form_view.php?form_id=<?= $row['form_id'] ?>" style="color: #5e4283; font-weight: bold;">🔍 Vizualizează</a>
+            </td>
+          </tr>
+        <?php endwhile; ?>
+      </tbody>
+      <div style="text-align: right; margin-bottom: 20px;">
+        <a href="dashboard.php" style="background-color: #7b2ff2; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+          ⬅️ Înapoi la Dashboard
+        </a>
       </div>
-    <?php endwhile; ?>
+    </table>
   <?php else: ?>
     <p>Nu există formulare înregistrate.</p>
   <?php endif; ?>

@@ -3,171 +3,101 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-$allowed_pages = ['login.php', 'login_check.php', 'signup.php'];
-
-$current_page = basename($_SERVER['PHP_SELF']);
-
-if (!in_array($current_page, $allowed_pages) && !isset($_SESSION['username'])) {
-    header('Location: login.php');
-    exit();
-}
-
-require_once 'db.php';
-
-// Numărăm pending users doar pentru admin
-$pendingUsersCount = 0;
-if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
-    $pendingUsersCount = $conn->query("SELECT COUNT(*) FROM pending_users")->fetch_row()[0];
-}
+$username = $_SESSION['username'] ?? '';
+$role = $_SESSION['role'] ?? '';
 ?>
+
 <!DOCTYPE html>
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SafeAlert</title>
     <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+        .navbar {
+            background-color: #5e4283;
+            padding: 15px;
             display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-
-        header {
-            background-color: #5e4b8b;
-            color: white;
-            padding: 10px 20px;
-            display: flex;
-            align-items: center;
             justify-content: space-between;
-            position: fixed; 
-            top: 0;
-            left: 0;
-            width: 100%;
-            z-index: 1000;
+            align-items: center;
         }
 
-
-        header h1 {
-            margin: 0;
-            font-size: 28px;
-            color:white;
-        }
-
-        header img {
-            height: 50px;
-            margin-right: 15px;
-        }
-
-        nav a {
+        .navbar a {
             color: white;
-            margin-right: 20px;
             text-decoration: none;
+            margin-right: 20px;
             font-weight: bold;
-            position: relative;
         }
 
-        nav a:hover {
+        .navbar a:hover {
             text-decoration: underline;
         }
 
-        .notification-badge {
+        .navbar .menu {
+            display: flex;
+            align-items: center;
+        }
+
+        .badge {
             background-color: red;
             color: white;
-            border-radius: 50%;
-            padding: 2px 6px;
-            font-size: 12px;
-            position: absolute;
-            top: -8px;
-            right: -12px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-left: 5px;
         }
 
-        .container {
-            width: 1200px;
-            max-width: 90%;
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            margin: 20px auto;
-            margin-top: 100px; 
+        .badge-orange {
+            background-color: orange;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+        .mark-read {
+            color: #ffb400;
+            margin-left: 10px;
+            font-weight: bold;
         }
 
-        table th, table td {
-            border: 1px solid #ccc;
-            padding: 10px;
-            text-align: center;
-        }
-
-        table th {
-            background-color: #5e4b8b;
-            color: white;
-        }
-
-        table tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-        button, .btn {
-            background-color: #7b5eb6;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
+        .mark-read:hover {
+            text-decoration: underline;
             cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            margin-top: 10px;
-        }
-
-        button:hover, .btn:hover {
-            background-color: #6749a4;
-        }
-
-        footer {
-            background-color: #5e4b8b;
-            color: white;
-            text-align: center;
-            padding: 10px;
-            margin-top: auto;
         }
     </style>
 </head>
 <body>
-    <header>
-        <div style="display: flex; align-items: center;">
-            <img src="LOGO SAFEALERT.png" alt="SafeAlert Logo">
-            <h1>SafeAlert</h1>
-        </div>
-        <nav>
-            <a href="dashboard.php">Dashboard</a>
 
-            <?php if ($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'authority') : ?>
-                <a href="view_forms.php">Formulare</a>
-                <a href="view_alerts.php">Alerte</a>
-            <?php endif; ?>
+<div class="navbar">
+    <div class="menu">
+        <a href="dashboard.php">Dashboard</a>
+        <?php if ($role === 'admin' || $role === 'authority'): ?>
+            <a href="view_alerts.php">Alerte <span id="alertBadge" class="badge">0</span></a>
+            <a href="view_forms.php">Formulare</a>
+        <?php endif; ?>
 
-            <a href="view_interventions.php">Intervenții</a>
+        <a href="view_interventions.php">Intervenții</a>
 
-            <?php if ($_SESSION['role'] == 'admin') : ?>
-                <a href="manage_pending_users.php" style="position: relative;">
-                    Utilizatori
-                    <?php if ($pendingUsersCount > 0): ?>
-                        <span class="notification-badge"><?= $pendingUsersCount ?></span>
-                    <?php endif; ?>
-                </a>
-            <?php endif; ?>
+        <?php if ($role === 'admin'): ?>
+            <a href="view_authorities.php">Autorități</a>
+            <a href="manage_pending_users.php">Conturi <span id="pendingBadge" class="badge badge-orange">0</span></a>
+            <a href="mark_notifications_read.php" class="mark-read">🔄 Marchează ca citite</a>
+        <?php endif; ?>
+    </div>
 
-            <a href="logout.php">Logout</a>
-        </nav>
-    </header>
+    <div>
+        Autentificat ca: <?= htmlspecialchars($username) ?> |
+        <a href="logout.php" style="color: white; font-weight: bold;">Logout</a>
+    </div>
+</div>
 
-    <div class="container">
+<script>
+    function updateNotifications() {
+        fetch('check_new_alerts.php')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('pendingBadge').innerText = data.pending;
+                document.getElementById('alertBadge').innerText = data.alerts;
+            });
+    }
+
+    setInterval(updateNotifications, 5000);
+    updateNotifications();
+</script>

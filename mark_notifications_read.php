@@ -1,16 +1,10 @@
 <?php
-session_start();
 require_once 'db.php';
-include 'header.php';
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    header("Location: login.php");
-    exit();
-}
+$conn->query("UPDATE pending_users SET notified = 1 WHERE notified = 0");
+$conn->query("UPDATE alerts SET status = 'read' WHERE status = 'new'");
 
-// Actualizăm notificările necitite ca fiind citite
-$conn->query("UPDATE notifications SET is_read = 1 WHERE is_read = 0");
-
-// Revenim la dashboard
-header("Location: dashboard.php");
+header('Content-Type: application/json');
+echo json_encode(['status' => 'success']);
 exit();
+?>
